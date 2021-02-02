@@ -1,0 +1,10 @@
+
+*.jpg
+*.model
+*.avi
+*.mp4
+*.pyc
+relaynet_pytorch-master/build/*
+relaynet_pytorch-master/relaynet_pytorch.egg-info/*
+relaynet_pytorch-master/.ipynb_checkpoints/*
+.vscode/*
