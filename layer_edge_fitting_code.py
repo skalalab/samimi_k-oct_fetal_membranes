@@ -223,7 +223,8 @@ for im_path in im_paths: #[3:6]:
     
     #calculate mean and finally plot lines
     mean_length = np.mean(list_layer_lengths)
-    print(f"top layer: {list_layer_lengths[0]} bottom layer: {list_layer_lengths[1]} mean: {mean_length}")
+    thickness = np.sum(mask)/mean_length
+    plt.title(f"top layer: {list_layer_lengths[0]:.4f} bottom layer: {list_layer_lengths[1]:.4f} mean: {mean_length:.4f} \n thickness: {thickness:.4f} ")
     plt.show()
     
     
