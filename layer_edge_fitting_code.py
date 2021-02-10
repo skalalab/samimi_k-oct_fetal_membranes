@@ -51,26 +51,19 @@ def _find_top_layer_vertices(mask):
                 break # go to next row
     return list_layer_vertices
 
-# Algorithm --> Smooth curved surfaces
-# for each mask -->
-# to find the top and bottom
-# 	for each column find top and bottom masks and take average
 
-
-working_dir = Path("C:/Users/Nabiki/Desktop/split_masks_selected")
-im_paths = list(working_dir.glob("*.tiff"))
-
-
-#iterate through every mask
-for im_path in im_paths: #[3:6]:
-    pass
-
-    # LOAD AND SHOW MASK
-    mask = tifffile.imread(im_path)
-    mask = mask.transpose() ################## image must be vertical and binary
-    # plt.title("initial working image")
-    # plt.imshow(mask)
-    # plt.show()
+def compute_layer_thickness(mask, method, show_images=True):
+    
+    # validation
+    if method not in [1,2]:
+        print(f"Error invalid method id: {method}")
+        return
+    
+    
+    if show_images:
+        plt.title("input mask")
+        plt.imshow(np.transpose(mask))
+        plt.show()
         
     ############ remove small blobs (anything 10% or smaller)
     label_image = label(mask)
@@ -83,21 +76,18 @@ for im_path in im_paths: #[3:6]:
             largest_region = region
     layer_mask = remove_small_objects(label_image, min_size=(largest_region.area*0.1))  # remove spots < 10% largest region found
     layer_mask[layer_mask > 0] = 1
-    # show mask
-    # plt.title("after removing small blobs")
-    # plt.imshow(layer_mask)
-    # plt.show()
+    
+    if show_images:
+        plt.title("after removing small blobs")
+        plt.imshow(layer_mask)
+        plt.show()
     
     ##### EDGE CALCULATION
     vertices_top = _find_top_layer_vertices(layer_mask)
     vertices_bottom = _find_bottom_layer_vertices(np.flip(layer_mask, axis=1))
 
-    # Show image
-    # plt.imshow(np.transpose(mask))
-    # plt.show()
-    
+
     list_top_bottom_vertices = [vertices_top, vertices_bottom ]
-    
     
     # show edges extracted
     # for vertices in list_top_bottom_vertices:
@@ -123,10 +113,11 @@ for im_path in im_paths: #[3:6]:
         series_heights = pd.Series(list_vertex_heights)    
         series_heights_cleaned = hampel(series_heights, window_size=11, n=1) # window size was 3
         
-        # plt.title("red: original, black: after hampel filter")
-        # series_heights.plot(style="r-", alpha=1)
-        # series_heights_cleaned.plot(style="k-", alpha=1)
-        # plt.show()
+        if show_images:
+            plt.title("red: original, black: after hampel filter")
+            series_heights.plot(style="r-", alpha=1)
+            series_heights_cleaned.plot(style="k-", alpha=1)
+            plt.show()
         
         ####### Robtus Fitting RANSAC
         #https://stackoverflow.com/questions/55682156/iteratively-fitting-polynomial-curve/55787598
@@ -156,10 +147,11 @@ for im_path in im_paths: #[3:6]:
         
         x_vals = np.asarray(list_vertex_rows)
         y_vals = np.asarray(series_heights_cleaned)
-            
-        # plt.title("input to RANSACRegressor ")
-        # plt.scatter(x_vals, y_vals, s=1)
-        # plt.show()
+        
+        if show_images:
+            plt.title("input to RANSACRegressor")
+            plt.scatter(x_vals, y_vals, s=1)
+            plt.show()
         
         poly_degree = 2
         stdevs = 2
@@ -172,75 +164,145 @@ for im_path in im_paths: #[3:6]:
         inlier_mask = ransac.inlier_mask_
         
         y_hat = ransac.predict(np.expand_dims(x_vals, axis=1))
-        # plt.plot(x_vals, y_vals, 'bx', label='input samples')
-        # plt.plot(x_vals[inlier_mask], y_vals[inlier_mask], 'go', markersize=2, label=f'inliers ({str(stdevs)}*STD)')
-        # plt.plot(x_vals, y_hat, 'r-', label='estimated curve')
-        # plt.legend()
-        # plt.show()
+        if show_images:
+            plt.plot(x_vals, y_vals, 'bx', label='input samples')
+            plt.plot(x_vals[inlier_mask], y_vals[inlier_mask], 'go', markersize=2, label=f'inliers ({str(stdevs)}*STD)')
+            plt.plot(x_vals, y_hat, 'r-', label='estimated curve')
+            plt.legend()
+            plt.show()
         
         list_vertex_rows
         
         coeffs = np.polyfit(x_vals, y_hat, poly_degree)
         list_coeffs.append([coeffs, (np.min(list_vertex_rows), np.max(list_vertex_rows))])
-        
-    # calculate coeffs
-    mask = np.transpose(mask)
-    plt.imshow(mask)
-    list_layer_lengths = []
+
+
+    mask = np.transpose(mask) # compute things on a horizontal mask
     n_rows, n_cols = mask.shape
-    for equation_params in list_coeffs:
-        pass
-        coeffs, (min_value,max_value) = equation_params
-        # coeffs = np.polyfit(x_vals, y_hat, poly_degree)
-        poly_eqn = np.poly1d(coeffs)
+    # plt.imshow(mask)
+    # plt.show()
+
+    
+    # METHOD 1 - CALCULATE MIDDLE LINE
+    if method == 1:
+        poly_top_edge = np.poly1d(list_coeffs[0][0])
+        poly_bottom_edge = np.poly1d(list_coeffs[1][0])
+    
+        x_vals = np.linspace(0, n_cols, num=(n_cols +1)) # +1 to produce whole numbers/pixels
         
-        # y values part of the image
-        x_vals = np.linspace(0, n_cols, num=(n_cols +1))
-        y_hat = poly_eqn(x_vals)
-        bool_array_valid_points = y_hat <= n_rows
+        y_hat_top = poly_top_edge(x_vals) # top is lower number due to origin on top left
+        y_hat_bottom = poly_bottom_edge(x_vals)
         
+        y_hat_middle = y_hat_top + ((y_hat_bottom - y_hat_top)/2)
+        
+        # Fit new line and get y values
+        coeffs_middle_poly = np.polyfit(x_vals, y_hat_middle, poly_degree)
+        poly_middle = np.poly1d(coeffs_middle_poly)
+        y_hat_middle = poly_middle(x_vals)
+        
+        # Only keep pixels in image
+        bool_array_valid_points = y_hat_middle <= n_rows
         x_vals_within_image = x_vals[bool_array_valid_points]
-        y_vals_within_image = y_hat[bool_array_valid_points]
-        
-        
-        # draw line with valid points
+        y_vals_within_image = y_hat_middle[bool_array_valid_points]
+    
         length = 0
-        for pos, (x, y) in enumerate(zip(*[x_vals_within_image, y_vals_within_image])) :
+        for pos, (x,y) in enumerate(zip(x_vals_within_image, y_vals_within_image)):
             pass
-            index_next_point = pos+1
-            
-            #last value, no next point
-            if (index_next_point) == len(x_vals_within_image):
+            # reached last value
+            index_next_point = idx_curr_value =  pos+1
+            if index_next_point == len(x_vals_within_image):
                 break
-            # calculate distance
+            
             x_dist = np.absolute(x-x_vals_within_image[index_next_point])
             y_dist = np.absolute(y-y_vals_within_image[index_next_point])
-            length +=np.sqrt(x_dist**2 + y_dist**2) # pythagoras        
-        list_layer_lengths.append(length)
+            length +=np.sqrt(x_dist**2 + y_dist**2) # pythagoras     
+            
+    
+        thickness = np.sum(mask)/length
         
-        #plot image
-        plt.plot(x_vals_within_image, y_vals_within_image, '-', label='estimated curve', linewidth=1)
+        if show_images:
+            plt.title(f"method 1 center line\n layer length: {length:.4f} \n thickness: {thickness:.4f}")    
+            plt.imshow(mask)
+            plt.plot(x_vals_within_image, y_vals_within_image, '-',  linewidth=1)
+            plt.show()
+        
+        return thickness, [coeffs_middle_poly]
     
-    #calculate mean and finally plot lines
-    mean_length = np.mean(list_layer_lengths)
-    thickness = np.sum(mask)/mean_length
-    plt.title(f"top layer: {list_layer_lengths[0]:.4f} bottom layer: {list_layer_lengths[1]:.4f} mean: {mean_length:.4f} \n thickness: {thickness:.4f} ")
-    plt.show()
+    if method == 2: 
+        # METHOD 2 - CALCULATE TOP AND BOTTOM EDGES AND AVERAGE DISTANCE
+       
+        list_layer_lengths = [] 
+        
+        if show_images:
+            plt.imshow(mask)
+        
+        # Average top and bottom lengths  
+        for equation_params in list_coeffs:
+            pass
+            coeffs, (min_value,max_value) = equation_params
+            poly_eqn = np.poly1d(coeffs)
+            
+            # y values part of the image
+            x_vals = np.linspace(0, n_cols, num=(n_cols +1)) # +1 to produce whole numbers/pixels
+            y_hat = poly_eqn(x_vals)
+            
+            # Only keep pixels in image
+            bool_array_valid_points = y_hat <= n_rows
+            x_vals_within_image = x_vals[bool_array_valid_points]
+            y_vals_within_image = y_hat[bool_array_valid_points]
+            
+            
+            # Calculate top and bottom lengths
+            length = 0
+            for pos, (x, y) in enumerate(zip(*[x_vals_within_image, y_vals_within_image])) :
+                pass
+                index_next_point = idx_curr_value =  pos+1
     
+                #last value outside of array, no next point
+                if idx_curr_value == len(x_vals_within_image):
+                    break
+                # calculate distance
+                x_dist = np.absolute(x-x_vals_within_image[index_next_point])
+                y_dist = np.absolute(y-y_vals_within_image[index_next_point])
+                length +=np.sqrt(x_dist**2 + y_dist**2) # pythagoras        
+            list_layer_lengths.append(length)
+ 
+            #plot image
+            if show_images:
+                plt.plot(x_vals_within_image, y_vals_within_image, '-', label='estimated curve', linewidth=1)
     
-# Fit 2nd order polynomial -->
-# robust linearly squares --> tolerante to noise
-# weighted least squares
-# calculate other thick layers and leftover is the amnion
-# fit parabola to the top > robust fitting method > 
-# ransac --> outliers in the y direction 
-# apply hampel filter on the points to smooth out the curve --> 5 or 9 windows size
-
-# find pixel indices --> hampel filter -- then fit --> repeat for bottom curve
-
-# ---- find top and bottom
-# --> spline fitting
-
-# difference of gaussians - DOG - find blobs of certain sizes--> convolve --> 
+        #calculate mean and finally plot lines
+        mean_length = np.mean(list_layer_lengths)
+        thickness = np.sum(mask)/mean_length
+        
+        if show_images:
+            plt.title(f"method 2 avg top and bottom \n top layer: {list_layer_lengths[0]:.4f} bottom layer: {list_layer_lengths[1]:.4f} mean: {mean_length:.4f} \n thickness: {thickness:.4f} ")
+            plt.show()
+    
+        # return thickness and coeffs of polynomials 
+        return thickness, [list_coeffs[0][0], list_coeffs[1][0]] 
 
 #%%
+
+if __name__ == "__main__":
+    pass
+    
+# Algorithm --> Smooth curved surfaces
+# for each mask -->
+# to find the top and bottom
+# 	for each column find top and bottom masks and take average
+
+working_dir = Path("C:/Users/Nabiki/Desktop/split_masks_selected")
+im_paths = list(working_dir.glob("*.tiff"))
+
+#iterate through every mask
+for im_path in im_paths: #[3:4]:
+    pass
+        # LOAD AND SHOW MASK
+    mask = tifffile.imread(im_path)
+    mask = mask.transpose() ################## image must be vertical and binary
+    # plt.title("initial working image")
+    # plt.imshow(mask)
+    # plt.show()
+    method = 2
+    thickness = compute_layer_thickness(mask, method, show_images=False)
