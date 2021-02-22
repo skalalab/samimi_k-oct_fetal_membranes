@@ -16,6 +16,7 @@ from skimage import morphology
 
 from skimage.measure import label, regionprops
 import os
+from layer_edge_fitting_code import compute_layer_thickness
 
 # set cwd to relaynet directory
 os.chdir("/home/skalalab/Desktop/development/relaynet_pytorch")
@@ -34,13 +35,13 @@ mpl.rcParams['figure.dpi'] = 300
 base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # path_image = base_path / ""
 
-# path_image = base_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
+path_image = base_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D.tiff"
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 # path_image = base_path / "2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D/2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
-path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
+# path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
 
 
 # path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D.tiff"
@@ -207,6 +208,7 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
 # calculate layer thickness from labels mask
 # generate plots from calculations
 
+
 list_decidua_thickness = []
 list_chorion_thickness = []
 list_spongy_thickness = []
@@ -222,30 +224,10 @@ edges_amnion = []
 list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
 
-# directory to hold split masks
-path_split_masks = path_image.parent / "split_masks"
-path_split_masks.mkdir(exist_ok=True)
-
-for frame_num, (image, labels) in enumerate(zip(list_images[:], list_inferences[:]), start=1):
+for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1):
     print(
         f"calculating layer thickness for image: {frame_num}/{len(list_images)}")
     pass
-
-    # export images for Dan
-    temp_labels = labels.transpose()
-    path_image_output = path_split_masks / \
-        f"{path_image.stem}_image_{str(frame_num).zfill(4)}.tiff"
-    tifffile.imsave(path_image_output, image)
-    for mask_value, layer_name in zip(np.unique(labels)[1:-1], ["decidua", "chorion", "spongy", "amnion"]):
-        pass
-        path_mask_output = path_split_masks / \
-            f"{path_image.stem}_{layer_name}_{str(frame_num).zfill(4)}.tiff"
-        single_mask = (labels == mask_value).astype(bool).transpose()
-        # tifffile.imsave(path_mask_output, single_mask)
-        plt.title(f"{layer_name} frame {frame_num}")
-        plt.imshow(single_mask)
-        plt.show()
-    # END
 
     dict_layers = {
         1: "decidua",
@@ -254,10 +236,11 @@ for frame_num, (image, labels) in enumerate(zip(list_images[:], list_inferences[
         4: "amnion"
     }
 
+    # iterate through each layer
     # calculate layer thickness
     # exclude top and bottom layers of placenta
     for layer_num, list_data_layers, list_data_edges in zip((np.unique(labels)[1:-1]), list_layer_thickness, list_layer_edges):
-
+        pass
         # convert layer to ints
         layer_mask = (labels == layer_num).astype(int)
 
@@ -289,186 +272,79 @@ for frame_num, (image, labels) in enumerate(zip(list_images[:], list_inferences[
             plt.imshow(layer_mask.transpose())
             plt.show()
 
-        # KEEP LARGEST CONNETED COMPONENT
-        # this enumerates blobs ! not binary mask anymore!
-        label_image = label(layer_mask)
+        ### start function for thickness calculation
+        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, show_images=False)
 
-        label_region_props = regionprops(label_image)
-        for pos, region in enumerate(label_region_props):
-            # print(f"pos: {pos} area: {region.area}")
-            if pos == 0:   # initialize with first region
-                largest_region = region  # initialize largest region
-            elif region.area > largest_region.area:
-                largest_region = region
-
-        # KEEP LARGEST REGION OR REMOVE ALL LARGER AREAS
-        # remove everything smaller than largest mask
-        # layer_mask = remove_small_objects(label_image, min_size=largest_region.area-1) # keek largest region
-        layer_mask = remove_small_objects(label_image, min_size=(
-            largest_region.area*0.1))  # remove spots < 10% largest region found
-
-        # make labels mask binary, otherwise area will be off
-        layer_mask[layer_mask > 0] = 1
-
-        # alternatively can keep largest region to use, significantly speeds up processing
-        # layer_mask = largest_region.image
-
-        # if debug:
-        # if layer_num == 2:
-        #     plt.title(f"largest region: {dict_layers[layer_num]} frame {frame_num}")
-        #     plt.imshow(layer_mask.transpose())
-        #     plt.show()
-        #     break
-
-        # calculate layer length 2nd method
-        # placenta is  vertical here, meaning edges are at the top and bottom
-        # layers increase left to right
-        def _find_layer_vertices(mask):
-            list_layer_vertices = []
-            for pos_row, row in enumerate(mask):  # iterate through rows
-                # iterate through cols in row
-                for pos_col, pixel_value in enumerate(row):
-
-                    if (pos_col+1) == len(row):  # check if we've reached the end of the array
-                        break  # goto next row
-
-                    if pixel_value == True:  # mask is at edge of mask
-                        list_layer_vertices.append(
-                            (pos_row, pos_col))  # save layer pixel
-                        break  # go to next row
-
-                    # next pixel is a layer pixel if different
-                    if pixel_value != row[pos_col+1]:
-                        list_layer_vertices.append(
-                            (pos_row, pos_col+1))  # save layer pixel
-                        break  # go to next row
-            return list_layer_vertices
-
-        # generate edge mask from vertices
-        def _generate_layer_edge_mask(list_vertices, mask_shape, show_image=False):
-            mask_layer_edge = np.zeros(mask_shape)  # mask_array
-            for pos, vertex in enumerate(list_vertices):
-                if (pos+1) == len(list_vertices):  # reached last vertex, exit
-                    break
-                curr_pixel_row, curr_pixel_col = vertex
-                next_row_pixel, next_col_pixel = list(
-                    list_vertices[pos+1])  # get next vertex
-                line_pixels = line(curr_pixel_row, curr_pixel_col,
-                                   next_row_pixel, next_col_pixel)
-
-                # fill in pixels in array
-                for pos, (pixel_row, pixel_col) in enumerate(zip(*line_pixels)):
-                    # fill edges with ones
-                    mask_layer_edge[pixel_row, pixel_col] = 1
-
-            if show_image:
-                plt.imshow(mask_layer_edge, vmin=0, vmax=1)
-                plt.show()
-
-            return mask_layer_edge
-
-        # calculate top edge
-        list_top_pixels = _find_layer_vertices(layer_mask)
-        mask_top_edge = _generate_layer_edge_mask(
-            list_top_pixels, layer_mask.shape, show_image=False)
-        if debug:
-            plt.title(
-                f"{dict_layers[layer_num]} top edge from frame {frame_num}")
-            plt.imshow(mask_top_edge.transpose())
-            plt.show()
-
-        # calculate bottom layer thickness
-        list_bottom_pixels = _find_layer_vertices(np.flip(layer_mask, axis=1))
-        mask_bottom_edge = _generate_layer_edge_mask(
-            list_bottom_pixels, layer_mask.shape, show_image=False)
-        if debug:
-            plt.title(
-                f"{dict_layers[layer_num]} bottom edge from frame {frame_num}")
-            plt.imshow(np.flipud(mask_bottom_edge.transpose()))
-            plt.show()
-
-        layer_top_length = np.sum(mask_top_edge)
-        layer_bottom_length = np.sum(mask_bottom_edge)
-        average_layer_thickness = (layer_top_length + layer_bottom_length)/2
-
-        mask_area = np.sum(layer_mask)
-        layer_thickness = np.sum(layer_mask)/average_layer_thickness
 
         # add to list for plotting
         list_data_layers.append(layer_thickness)
 
-        # save edges to plot later
-        mask_edges = (mask_top_edge + np.flip(mask_bottom_edge)).transpose()
+        #save binary mask of edges to displaylater
+        
+        m_rows, m_cols = layer_mask.shape
+        mask_edges = np.zeros((m_rows,m_cols))
+        for edge in list_mask_pixels:
+            pass
+            x_values, y_values = edge
+            for x_pixel, y_pixel in zip(x_values, y_values):
+                if x_pixel < m_rows and  y_pixel < m_cols:
+                    mask_edges[int(x_pixel), int(y_pixel)] = 1
+        
+        # plt.imshow(mask_edges, vmin=0, vmax=1)
+        # plt.show()
         list_data_edges.append(mask_edges)
+               
+        ## make masks to draw over
+        
+        # list_data_edges.append(mask_edges)
 
-        # debug edges
-        if layer_num == 1:  # which layer to debug
-            plt.title(f"{dict_layers[layer_num]} edges from frame {frame_num}")
+        # # PLOT IMAGE, MASK AND EDGES FOR DEBUGGING
+        # # if layer_num == 1:  # which layer to debug
+        # plt.title(f"{dict_layers[layer_num]} edges from frame {frame_num}")
 
-            # format original image
-            plot_image = image[:, 50:-50]
-            plot_image = cv2.cvtColor(plot_image, cv2.COLOR_GRAY2RGB)
+        # # format original image
+        # plot_image = image[:, 50:-50]
+        # plot_image = cv2.cvtColor(plot_image, cv2.COLOR_GRAY2RGB)
 
-            # add layer shape labels
-            plot_labels = layer_mask
-            # take last 265 pixels
-            plot_labels = plot_labels[..., -265:].transpose()
-            plot_labels = plot_labels.astype(np.float32)
-            plot_labels = cv2.cvtColor(plot_labels, cv2.COLOR_GRAY2RGB)
-            blue = (81, 220, 220)
-            l_mask = layer_mask.astype(bool)[..., -265:].transpose()
-            plot_labels[l_mask] = blue
-            plot_labels = plot_labels.astype(np.uint8)
-            overlayed_im_labels = cv2.addWeighted(
-                plot_image, 1, plot_labels, 0.5, 0)
-
-            # color edges in purple
-            # keep last 265 rows to match original image
-            plot_mask_edges = mask_edges[-265:, :]
-            e_mask = plot_mask_edges  # for coloring purposes
-            plot_mask_edges = plot_mask_edges.astype(np.float32)
-            plot_mask_edges = cv2.cvtColor(plot_mask_edges, cv2.COLOR_GRAY2RGB)
-            plot_mask_edges = plot_mask_edges.astype(np.uint8)
-            edge_color = (0, 255, 0)
-
-            plot_mask_edges[e_mask.astype(bool)] = edge_color
-            # combine images
-            overlayed_im_edges = cv2.addWeighted(
-                overlayed_im_labels, 1, plot_mask_edges, 1, 0)
-
-            plt.imshow(overlayed_im_edges)
-            plt.show()
-            print(f"frame: {frame_num} top layer length: {layer_top_length}  bottom layer length: {layer_bottom_length}  mask area: {mask_area}  layer thickness: {layer_thickness}")
-
-        # for troubleshooting, look at chorion first
-        # if layer_num == 1: # this is the chorion
-        #     chorion_length_top.append(layer_top_length)
-        #     chorion_length_bottom.append(layer_bottom_length)
-        #     chorion_area.append(mask_area)
-        #     # chorion_edges = (mask_top_edge + np.fliplr(mask_bottom_edge)).transpose()
-        #     # plt.imshow(chorion_edges[:100,600:800])
-        #     # plt.show()
-        #     # list_chorion_edges.append(chorion_edges)
+        # # add layer shape labels
+        # plot_labels = layer_mask
+        
+        # # take last 265 pixels which are what corresponds to original image
+        # # because we added padding on top of the image
+        # plot_labels = plot_labels[..., -265:].transpose()
+        # plot_labels = plot_labels.astype(np.float32)
+        # plot_labels = cv2.cvtColor(plot_labels, cv2.COLOR_GRAY2RGB)
+        # blue = (81, 220, 220)
+        # l_mask = layer_mask.astype(bool)[..., -265:].transpose()
+        # plot_labels[l_mask] = blue
+        # plot_labels = plot_labels.astype(np.uint8)
+        # overlayed_im_labels = cv2.addWeighted(
+        #     plot_image, 1, plot_labels, 0.5, 0)
 
 
-# %%## combine edges and save tiff, only if original dimensions kept across all masks (line 262)
+        # plt.imshow(overlayed_im_labels)
+        # plt.show()
+        # print(f"frame: {frame_num} top layer length: {layer_top_length}  bottom layer length: {layer_bottom_length}  mask area: {mask_area}  layer thickness: {layer_thickness}")
+
+
+
+# %%## combine all edges into a single mask 
 edge_masks = []
-# imagej=True
-with tifffile.TiffWriter(f"/home/skalalab/Desktop/{path_image.stem}_edges.tiff", bigtiff=True) as tif:
-    # iterate through edge lists
-    for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer_edges)):
-        combined_mask = e_decidua + e_chorion + e_spongy + e_amnion
-        edge_masks.append(combined_mask)
-        # tif.save(combined_mask.astype(np.float32))
-# %%
+
+for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer_edges)):
+    combined_mask = e_decidua + e_chorion + e_spongy + e_amnion
+    edge_masks.append(combined_mask)
 
 # save labeled mask
 # make tiffs of original, colored overlayed predictions and edges
 tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
-print("saving tiff combined output")
-out_path = str(path_image.parent / f"{path_image.stem}_combined_edges.tiff")
+# print("saving tiff combined output")
+out_path = str(path_image.parent / f"{path_image.stem}_with_overlays.tiff")
+
+# out_path = str( f"/home/skalalab/Desktop/{path_image.stem}_combined_edges.tiff")
 with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
     for pos, (image, labels, edges) in enumerate(zip(list_images, list_inferences_colored, edge_masks)):
+        pass
         # tiff_stack[pos,...] = labels.transpose().astype(int)
         print(f"saving image {pos+1}/{len(list_images)}")
 
@@ -480,21 +356,28 @@ with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
         image = image[:, 50:-50]
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 
+
         # shape labels
         labels = np.swapaxes(labels, 0, 1)
-        labels = labels[-265:, ...]  # take last 265 pixels
-
+        labels = labels[-265:, ...]  # take last 265 pixels which are the image
+ 
+        
         overlayed_im_mask = cv2.addWeighted(image, 1, labels, 0.5, 0)
         # plt.imshow(overlayed_im_mask)
 
-        # add edges
-        edges = edges.astype(np.float32)
+        # OVERLAY EDGES
+        edges = edges.astype(np.uint8).transpose() # transpose to make horizontal #astype(np.float32) 
         edges[edges > 0] = 255
         edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+        edges = edges[-265:,...]
+        edges[...,0] = 0
+        edges[...,2] = 0
+        
+        overlayed_edges = cv2.addWeighted(image, 1, edges,1, 0)
 
         # stack images
         # crop edges to original image size (265,3000)
-        stack = np.vstack((image, overlayed_im_mask, edges[247:, :]))
+        stack = np.vstack((image, overlayed_im_mask, overlayed_edges)) # why this 247 again?
         # stack = np.vstack((image, overlayed_im_mask))
 
         # add frame number to output image
@@ -516,7 +399,7 @@ plt.ylabel("thickness (pixels)")
 plt.title(f"{path_image.stem}")
 plt.legend(list(dict_layers.values()))
 path_fig_output = path_image.parent / \
-    f"{path_image.stem}_plot_largest_region.jpeg"
+    f"{path_image.stem}_layer_thickness_plot.jpeg"
 print(f"figure saved in: {str(path_fig_output)}")
 plt.savefig(str(path_fig_output))
 plt.show()

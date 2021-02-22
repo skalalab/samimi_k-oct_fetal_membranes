@@ -75,7 +75,7 @@ def compute_layer_thickness(mask, method, show_images=True):
         elif region.area > largest_region.area:
             largest_region = region
     layer_mask = remove_small_objects(label_image, min_size=(largest_region.area*0.1))  # remove spots < 10% largest region found
-    layer_mask[layer_mask > 0] = 1
+    layer_mask[layer_mask > 0] = 1 # make mast binary of area will be off
     
     if show_images:
         plt.title("after removing small blobs")
@@ -154,7 +154,7 @@ def compute_layer_thickness(mask, method, show_images=True):
             plt.show()
         
         poly_degree = 2
-        stdevs = 2
+        stdevs = 3
         residual_threshold = stdevs * np.std(y_vals)
         ransac = RANSACRegressor(PolynomialRegression(degree=poly_degree),
                                   residual_threshold=residual_threshold,
@@ -185,6 +185,7 @@ def compute_layer_thickness(mask, method, show_images=True):
     
     # METHOD 1 - CALCULATE MIDDLE LINE
     if method == 1:
+        print("method 1 selected")
         poly_top_edge = np.poly1d(list_coeffs[0][0])
         poly_bottom_edge = np.poly1d(list_coeffs[1][0])
     
@@ -229,6 +230,7 @@ def compute_layer_thickness(mask, method, show_images=True):
         return thickness, [coeffs_middle_poly]
     
     if method == 2: 
+        print("method 2 selected")
         # METHOD 2 - CALCULATE TOP AND BOTTOM EDGES AND AVERAGE DISTANCE
        
         list_layer_lengths = [] 
@@ -236,7 +238,8 @@ def compute_layer_thickness(mask, method, show_images=True):
         if show_images:
             plt.imshow(mask)
         
-        # Average top and bottom lengths  
+        # Average top and bottom lengths
+        list_points_edges = []
         for equation_params in list_coeffs:
             pass
             coeffs, (min_value,max_value) = equation_params
@@ -250,6 +253,9 @@ def compute_layer_thickness(mask, method, show_images=True):
             bool_array_valid_points = y_hat <= n_rows
             x_vals_within_image = x_vals[bool_array_valid_points]
             y_vals_within_image = y_hat[bool_array_valid_points]
+            
+            # store points in list_to_return
+            list_points_edges.append((x_vals_within_image,y_vals_within_image))
             
             
             # Calculate top and bottom lengths
@@ -280,7 +286,7 @@ def compute_layer_thickness(mask, method, show_images=True):
             plt.show()
     
         # return thickness and coeffs of polynomials 
-        return thickness, [list_coeffs[0][0], list_coeffs[1][0]] 
+        return thickness, [list_coeffs[0][0], list_coeffs[1][0]] , list_points_edges
 
 #%%
 
