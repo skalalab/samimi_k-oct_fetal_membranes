@@ -278,7 +278,7 @@ for frame_num, (image, labels) in enumerate(zip(list_images[:10], list_inference
             plt.show()
 
         ### start function for thickness calculation
-        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, show_images=True)
+        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, debug=True)
 
 
         # add to list for plotting
