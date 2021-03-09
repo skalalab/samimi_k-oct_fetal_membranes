@@ -42,9 +42,9 @@ not_found = 0
 # rois = read_roi_zip(path_roi) 
 
 # iterate through each data folder
-for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")):
+for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*"))[0:1]:
 # for img_folder in [list(path_segmented_dataset.glob("*_amniochorion_*"))[-1]]:
-    
+    pass
     
     print(f"***** Processing Directory: {img_folder.name}")
     path_images = img_folder / "images"
@@ -52,6 +52,7 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")):
     
     # iterate through each roi
     for path_roi_file in list(path_rois.glob("*.zip")):
+        pass
         print(f"roi found: {path_roi_file.name}")
 
         # image path
@@ -122,10 +123,21 @@ for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_l
     print(f"Augmenting image: {pos+1}/{len(list_images)}")
           
     ##### MIRROR DATA
-    debug = False
+    debug = True
     im_mirrored = ru.mirror_array(image, show_image=debug)
     labels_mirrored = ru.mirror_array(mask_labels, show_image=debug)
     weights_mirrored = ru.mirror_array(mask_weights, show_image=debug)
+    
+    if debug:
+        plt.title("mirrored")
+        plt.imshow(im_mirrored)
+        plt.show()
+        plt.title("mirrored")
+        plt.imshow(labels_mirrored)
+        plt.show()
+        plt.title("mirrored")
+        plt.imshow(weights_mirrored)
+        plt.show()
     
     list_images_aug.append(im_mirrored) 
     list_labels_aug.append(labels_mirrored)
@@ -138,6 +150,17 @@ for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_l
         list_images_aug.append(t_im)
         list_labels_aug.append(t_labels)
         list_weights_aug.append(t_weights)
+        if debug:
+            plt.title("translate")
+            plt.imshow(t_im)
+            plt.show()
+            plt.title("translate")
+            plt.imshow(t_labels)
+            plt.show()
+            plt.title("translate")
+            plt.imshow(t_weights)
+            plt.show()
+            
    
     ##### SCALE DATA
     num_rows, num_cols = image.shape
@@ -149,6 +172,17 @@ for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_l
     im_scaled = skimage.transform.resize(image,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
     labels_scaled = skimage.transform.resize(mask_labels,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
     weights_scaled = skimage.transform.resize(mask_weights,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
+    
+    if debug:
+        plt.title("scaled")
+        plt.imshow(im_scaled)
+        plt.show()
+        plt.title("scaled")
+        plt.imshow(labels_scaled)
+        plt.show()
+        plt.title("scaled")
+        plt.imshow(weights_scaled)
+        plt.show()
     
     # clean up mask
     # weight_bg, weight_layer, weight_transition = np.unique(mask_weights)
@@ -202,6 +236,18 @@ for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_l
         list_images_aug.append(rolled_image)
         list_labels_aug.append(rolled_labels)
         list_weights_aug.append(rolled_weights)
+        
+               
+        if debug:
+            plt.title("refocusing augmentation")
+            plt.imshow(rolled_image)
+            plt.show()
+            plt.title("refocusing augmentation")
+            plt.imshow(rolled_labels)
+            plt.show()
+            plt.title("refocusing augmentation")
+            plt.imshow(rolled_weights)
+            plt.show()
     
         # for array in [rolled_image, rolled_labels, rolled_weights]:
         #     plt.imshow(array)
@@ -212,6 +258,7 @@ for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_l
     
     fill_constant_value_labels = np.unique(mask_labels)[0] # fill with bg , label 0
     fill_constant_value_weights = np.unique(mask_weights)[0]
+    
     # rotate 
     im_rotate_plus_10 = ru.rotate_image(image, 10, show_image=debug)
     labels_rotate_plus_10 = ru.rotate_mask(mask_labels, 10,fill_constant_value_labels, show_image=debug)  

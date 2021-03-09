@@ -52,7 +52,7 @@ def _find_top_layer_vertices(mask):
     return list_layer_vertices
 
 
-def compute_layer_thickness(mask, method, show_images=True):
+def compute_layer_thickness(mask, method, debug=True):
     
     # validation
     if method not in [1,2]:
@@ -60,7 +60,7 @@ def compute_layer_thickness(mask, method, show_images=True):
         return
     
     
-    if show_images:
+    if debug:
         plt.title("input mask")
         plt.imshow(np.transpose(mask))
         plt.show()
@@ -77,7 +77,7 @@ def compute_layer_thickness(mask, method, show_images=True):
     layer_mask = remove_small_objects(label_image, min_size=(largest_region.area*0.1))  # remove spots < 10% largest region found
     layer_mask[layer_mask > 0] = 1 # make mast binary of area will be off
     
-    if show_images:
+    if debug:
         plt.title("after removing small blobs")
         plt.imshow(layer_mask)
         plt.show()
@@ -113,7 +113,7 @@ def compute_layer_thickness(mask, method, show_images=True):
         series_heights = pd.Series(list_vertex_heights)    
         series_heights_cleaned = hampel(series_heights, window_size=11, n=1) # window size was 3
         
-        if show_images:
+        if debug:
             plt.title("red: original, black: after hampel filter")
             series_heights.plot(style="r-", alpha=1)
             series_heights_cleaned.plot(style="k-", alpha=1)
@@ -148,7 +148,7 @@ def compute_layer_thickness(mask, method, show_images=True):
         x_vals = np.asarray(list_vertex_rows)
         y_vals = np.asarray(series_heights_cleaned)
         
-        if show_images:
+        if debug:
             plt.title("input to RANSACRegressor")
             plt.scatter(x_vals, y_vals, s=1)
             plt.show()
@@ -164,7 +164,7 @@ def compute_layer_thickness(mask, method, show_images=True):
         inlier_mask = ransac.inlier_mask_
         
         y_hat = ransac.predict(np.expand_dims(x_vals, axis=1))
-        if show_images:
+        if debug:
             plt.plot(x_vals, y_vals, 'bx', label='input samples')
             plt.plot(x_vals[inlier_mask], y_vals[inlier_mask], 'go', markersize=2, label=f'inliers ({str(stdevs)}*STD)')
             plt.plot(x_vals, y_hat, 'r-', label='estimated curve')
@@ -221,7 +221,7 @@ def compute_layer_thickness(mask, method, show_images=True):
     
         thickness = np.sum(mask)/length
         
-        if show_images:
+        if debug:
             plt.title(f"method 1 center line\n layer length: {length:.4f} \n thickness: {thickness:.4f}")    
             plt.imshow(mask)
             plt.plot(x_vals_within_image, y_vals_within_image, '-',  linewidth=1)
@@ -235,7 +235,7 @@ def compute_layer_thickness(mask, method, show_images=True):
        
         list_layer_lengths = [] 
         
-        if show_images:
+        if debug:
             plt.imshow(mask)
         
         # Average top and bottom lengths
@@ -274,14 +274,14 @@ def compute_layer_thickness(mask, method, show_images=True):
             list_layer_lengths.append(length)
  
             #plot image
-            if show_images:
+            if debug:
                 plt.plot(x_vals_within_image, y_vals_within_image, '-', label='estimated curve', linewidth=1)
     
         #calculate mean and finally plot lines
         mean_length = np.mean(list_layer_lengths)
         thickness = np.sum(mask)/mean_length
         
-        if show_images:
+        if debug:
             plt.title(f"method 2 avg top and bottom \n top layer: {list_layer_lengths[0]:.4f} bottom layer: {list_layer_lengths[1]:.4f} mean: {mean_length:.4f} \n thickness: {thickness:.4f} ")
             plt.show()
     

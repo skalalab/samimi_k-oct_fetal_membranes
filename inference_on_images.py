@@ -35,13 +35,13 @@ mpl.rcParams['figure.dpi'] = 300
 base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # path_image = base_path / ""
 
-path_image = base_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
+# path_image = base_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D.tiff"
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 # path_image = base_path / "2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D/2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
-# path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
+path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
 
 
 # path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D.tiff"
@@ -209,6 +209,11 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
 # generate plots from calculations
 
 
+# Hide RankWarning for RANSACregression
+import warnings
+warnings.filterwarnings(action="once")
+
+
 list_decidua_thickness = []
 list_chorion_thickness = []
 list_spongy_thickness = []
@@ -224,7 +229,7 @@ edges_amnion = []
 list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
 
-for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1):
+for frame_num, (image, labels) in enumerate(zip(list_images[:10], list_inferences), start=1):
     print(
         f"calculating layer thickness for image: {frame_num}/{len(list_images)}")
     pass
@@ -273,7 +278,7 @@ for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), s
             plt.show()
 
         ### start function for thickness calculation
-        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, show_images=False)
+        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, show_images=True)
 
 
         # add to list for plotting
@@ -338,7 +343,7 @@ for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer
 # save labeled mask
 # make tiffs of original, colored overlayed predictions and edges
 tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
-# print("saving tiff combined output")
+print("saving tiff overlayed output")
 out_path = str(path_image.parent / f"{path_image.stem}_with_overlays.tiff")
 
 # out_path = str( f"/home/skalalab/Desktop/{path_image.stem}_combined_edges.tiff")
