@@ -23,10 +23,15 @@ from read_roi import read_roi_zip
 import matplotlib as mpl
 mpl.rcParams['figure.dpi'] = 400
 
-# path_segmented_dataset = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
-#path_segmented_dataset = Path("C:/Users/econtrerasguzman/Desktop/0-segmentation_completed")
-path_segmented_dataset = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
-print(f"path_segmented_datset exists: {path_segmented_dataset.exists()}")
+####
+from sklearn.model_selection import KFold
+
+#linux 
+# path_segmented_dataset = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+# Windows
+path_segmented_dataset = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+
+assert path_segmented_dataset.exists() == True, print(f"path_segmented_datset doesn't exists: {path_segmented_dataset.exists()}")
 
 path_h5_output = path_segmented_dataset.parent / "0-h5"
 
@@ -37,13 +42,16 @@ list_labels = []
 list_weights = []
 not_found = 0
 
+# store paths to images to do the cross validation
+list_path_frame = []
+list_path_rois = []
 
 # path_roi = Path("/home/skalalab/Desktop/test_roi_set.zip")
 # rois = read_roi_zip(path_roi) 
 
 # iterate through each data folder
-for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*"))[0:1]:
-# for img_folder in [list(path_segmented_dataset.glob("*_amniochorion_*"))[-1]]:
+for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")): # [0:1] # get first image 
+# for img_folder in [list(path_segmented_dataset.glob("*_amniochorion_*"))[-1]]: # get last image
     pass
     
     print(f"***** Processing Directory: {img_folder.name}")
@@ -54,6 +62,10 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*"))[0:1]:
     for path_roi_file in list(path_rois.glob("*.zip")):
         pass
         print(f"roi found: {path_roi_file.name}")
+        
+        # populate list of paths to images
+        list_path_rois.append(path_roi_file)
+        
 
         # image path
         path_image = path_images / f"{path_roi_file.stem}.tiff"
@@ -66,12 +78,15 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*"))[0:1]:
                 raise FileNotFoundError
             
             if path_image.exists() == False :
-                # print(f"image file not found")
+                print(f"image file not found")
                 raise FileNotFoundError
         except:
             not_found += 1
             print(f"file not found: {str(path_roi_file.name)}")
             continue
+        
+        # add valid path to image
+        list_path_frame.append(path_image)
         
         # Get image file 
         image = tifffile.imread(str(path_image))
@@ -105,18 +120,46 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*"))[0:1]:
         list_weights.append(mask_weights)
         # plt.imshow(mask_weights)
         # plt.show()
-        
+
+
+# make a list of image/mask paths 
+# split into training/validation
 
 print(f"number of images: {len(list_images)}")
 print(f"number of labels masks: {len(list_labels)}")
 print(f"number of weight masks: {len(list_weights)}")
+print("-" * 20)
+print(f"number of paths to frames: {len(list_path_frame)}")
+print(f"number of paths to rois: {len(list_path_rois)}")
+print("-" * 20)
 print(f"images not found: {not_found}")
+
+
+## get list of dict
+list_list_frame_set = []
+for im, m_labels, m_weights, p_frame, p_rois in list(zip(list_images, list_labels,list_weights, list_path_frame, list_path_rois)):
+     list_list_frame_set.append((im, m_labels, m_weights, p_frame, p_rois))
+                                                     
+
+#%% do the splitting here
+
+kf = KFold(n_splits=10, shuffle=False, random_state=0)
+
+list_kfold_groups = []
+for train_indices, test_indices in kf.split(list_list_frame_set):
+    print(f"train_indices: {train_indices}, test_indices: {test_indices}")
+    list_kfold_groups.append((train_indices, test_indices))
+
+
+## now have list of indices
+
+
+
 
 #%% Apply augmentations
 list_images_aug = []
 list_labels_aug = []
 list_weights_aug = []
-
 
 for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_labels, list_weights)):
     pass
@@ -374,22 +417,13 @@ for idx, (image, labels, weights) in enumerate(list_all):
     h5_labels[idx,dim_weights, :, :] = weights  # pad to size of img_rows, img_cols
     
 
-
-
 # split dataset
 percent_class_training = 0.8 # class 1 = training
 class_validation = 3
 h5_set[int(num_images*percent_class_training):, 0] = class_validation
     
 #EXPORT DATASETS
-
-# output_path = Path(__file__).parent.absolute() # Path("/home/skalalab/Desktop/relaynet_unmodified/relaynet_pytorch-master")
-
-
-# #labels should start with 1
-# for label in h5_labels:
-#     print(np.unique(label[0,...]))
-    
+   
 with h5py.File(f"{str(path_h5_output / 'data_w_augs.h5')}", 'w') as f:
     f.create_dataset('oct_data', data = h5_data.astype(np.float64, copy=False))
 with h5py.File(f"{str(path_h5_output / 'labels_w_augs.h5')}", 'w') as f:
@@ -399,22 +433,4 @@ with h5py.File(f"{str(path_h5_output / 'set_w_augs.h5')}", 'w') as f:
 
 print(f"output directory: {path_h5_output}")
 
-####################################################################
-# fix filenames in May's images 
-# roi_path = Path("C:/Users/econtrerasguzman/Desktop/fix")
-
-# roi_path = roi_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D" / "roi_files"
- 
-
-# list_files= list(roi_path.glob("*.zip"))
-# for path_file in list_files:
-
-
-#     filename = path_file.name
-#     filename = filename.split(sep="_")
-    
-#     output_filename = "_".join(filename[:-2])
-#     output_filename = "_".join([output_filename, filename[-1]])
-    
-#     os.rename(path_file, str(path_file.parent / output_filename))
 

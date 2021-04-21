@@ -2,21 +2,33 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 import torch
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path
 import numpy as np
 import tifffile
 import matplotlib
-# matplotlib.use("Agg")
-import matplotlib.animation as animation
-from skimage.morphology import skeletonize, dilation, remove_small_objects
-# import relaynet_utils as ru
 import cv2
-from skimage.draw import line
 from skimage import morphology
-
-from skimage.measure import label, regionprops
 import os
 from layer_edge_fitting_code import compute_layer_thickness
+
+import relaynet_utils as ru
+
+
+# in spyder change figures to show higher, otherwise it shows gaps in layers
+mpl.rcParams['figure.dpi'] = 400
+#################################
+
+
+# update placenta_dataset_to_h5 to export filenames of training vs validation images
+# extract names and frame number
+# find and generate mask for frame
+# predict mask mask from frame
+# apply metrics 
+# comparison graphs
+# overlays to see what is different
+
+
+
 
 # set cwd to relaynet directory
 os.chdir("/home/skalalab/Desktop/development/relaynet_pytorch")
@@ -452,5 +464,99 @@ plt.show()
 
 # # for data in [chorion_length_top, chorion_length_bottom, chorion_area, list_chorion]:
 #%%
+
+
+
+# path_segmented_dataset = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+#path_segmented_dataset = Path("C:/Users/econtrerasguzman/Desktop/0-segmentation_completed")
+path_segmented_dataset = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+print(f"path_segmented_datset exists: {path_segmented_dataset.exists()}")
+
+path_h5_output = path_segmented_dataset.parent / "0-h5"
+
+# path_output = Path("Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmented_dataset")
+
+list_images = []
+list_labels = []
+list_weights = []
+not_found = 0
+
+
+# path_roi = Path("/home/skalalab/Desktop/test_roi_set.zip")
+# rois = read_roi_zip(path_roi) 
+
+# iterate through each data folder
+for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*"))[0:1]:
+# for img_folder in [list(path_segmented_dataset.glob("*_amniochorion_*"))[-1]]:
+    pass
+    
+    print(f"***** Processing Directory: {img_folder.name}")
+    path_images = img_folder / "images"
+    path_rois = img_folder / "roi_files"
+    
+    # iterate through each roi
+    for path_roi_file in list(path_rois.glob("*.zip")):
+        pass
+        print(f"roi found: {path_roi_file.name}")
+
+        # image path
+        path_image = path_images / f"{path_roi_file.stem}.tiff"
+        
+        # validate paths
+        # suspect too long image paths raise FileNotFound exception
+        try:
+            if path_roi_file.exists() == False :
+                print("roi file not found")
+                raise FileNotFoundError
+            
+            if path_image.exists() == False :
+                # print(f"image file not found")
+                raise FileNotFoundError
+        except:
+            not_found += 1
+            print(f"file not found: {str(path_roi_file.name)}")
+            continue
+        
+        # Get image file 
+        image = tifffile.imread(str(path_image))
+        
+        # some images are three channel, grab first channel
+        if len(image.shape) == 3:
+            image = image[...,0] # (rows,cols, channe )grab first channel
+        
+        list_images.append(image)
+        im_rows, im_cols = image.shape
+        
+        # get labels mask    
+        mask_labels_encoded = ru.roi_to_labels_mask(path_roi_file,im_rows, im_cols )
+        
+        mask_labels = ru.generate_labels_mask_oct(mask_labels_encoded, im_rows, im_cols)
+        
+        # side NaN's in mask are considered background, label them as 0
+        mask_labels[np.isnan(mask_labels)] = 0
+        
+        # offset labels so they start at 1
+        mask_labels += 1
+        list_labels.append(mask_labels)
+        
+        # plt.imshow(mask_labels)
+        # plt.show()
+        
+        # get weights mask
+        w1 = 10
+        w2 = 50
+        mask_weights = ru.generate_weights_oct(mask_labels, w1, w2)
+        list_weights.append(mask_weights)
+        # plt.imshow(mask_weights)
+        # plt.show()
+        
+
+print(f"number of images: {len(list_images)}")
+print(f"number of labels masks: {len(list_labels)}")
+print(f"number of weight masks: {len(list_weights)}")
+print(f"images not found: {not_found}")
+
+
+
 
 
