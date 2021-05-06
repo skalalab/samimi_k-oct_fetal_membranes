@@ -13,11 +13,11 @@ import tifffile
 # from read_roi import read_roi_zip
 import numpy as np
 import matplotlib.pylab as plt
-import random
+# import random
 import h5py
 import skimage.transform
-from skimage.draw import line
-from read_roi import read_roi_zip
+# from skimage.draw import line
+# from read_roi import read_roi_zip
 
 # in spyder change figures to show higher, otherwise it shows gaps in layers
 import matplotlib as mpl
@@ -29,7 +29,10 @@ from sklearn.model_selection import KFold
 #linux 
 # path_segmented_dataset = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # Windows
-path_segmented_dataset = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+# path_segmented_dataset = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+# Windows on desktop 
+path_segmented_dataset = Path("F:/Emmanuel/0-segmentation_completed")
+
 
 assert path_segmented_dataset.exists() == True, print(f"path_segmented_datset doesn't exists: {path_segmented_dataset.exists()}")
 
@@ -78,7 +81,7 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")): # [0:1]
                 raise FileNotFoundError
             
             if path_image.exists() == False :
-                print(f"image file not found")
+                print("image file not found")
                 raise FileNotFoundError
         except:
             not_found += 1
@@ -138,299 +141,351 @@ print(f"images not found: {not_found}")
 ## get list of dict
 list_list_frame_set = []
 for im, m_labels, m_weights, p_frame, p_rois in list(zip(list_images, list_labels,list_weights, list_path_frame, list_path_rois)):
-     list_list_frame_set.append((im, m_labels, m_weights, p_frame, p_rois))
+    dict_set = {
+        "image": im,
+        "m_labels": m_labels,
+        "m_weights": m_weights,
+        "path_frame": p_frame,
+        "path_rois": p_rois
+        }
+    list_list_frame_set.append(dict_set)
                                                      
 
 #%% do the splitting here
 
-kf = KFold(n_splits=10, shuffle=False, random_state=0)
+kf = KFold(n_splits=10, shuffle=True,  random_state=33)
 
-list_kfold_groups = []
-for train_indices, test_indices in kf.split(list_list_frame_set):
-    print(f"train_indices: {train_indices}, test_indices: {test_indices}")
-    list_kfold_groups.append((train_indices, test_indices))
+dict_kfold_indices = {}
+for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_frame_set))):
+    print("-" * 50)
+    print(f"train: {train_indices}")
+    print(f"test: {test_indices}")
+    print("-" * 50)
+    dict_kfold_indices[f"fold_{idx}"] = {
+        "train": train_indices,
+        "test": test_indices
+        }
 
+# split images according to folds
+dict_folds = {}
+## iterate through 
+for idx, fold in enumerate(dict_kfold_indices.keys()):
+    pass
 
-## now have list of indices
-
-
-
+    ## pack training
+    list_train = [list_list_frame_set[idx] for idx in dict_kfold_indices[fold]["train"]]  
+    ## pack testing
+    list_test = [list_list_frame_set[idx] for idx in dict_kfold_indices[fold]["test"]]
+    
+    dict_folds[f"{fold}"] = {
+        "train_set": list_train,
+        "test_set" : list_test
+        }
 
 #%% Apply augmentations
-list_images_aug = []
-list_labels_aug = []
-list_weights_aug = []
+# store augmentations for each fold
+dict_fold_augs = {}
 
-for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_labels, list_weights)):
+for fold_idx, fold in enumerate(dict_folds.keys()):
+    print(f"Processing {fold}:  {fold_idx+1}/{len(dict_folds.keys())})")
     pass
-    print(f"Augmenting image: {pos+1}/{len(list_images)}")
-          
-    ##### MIRROR DATA
-    debug = True
-    im_mirrored = ru.mirror_array(image, show_image=debug)
-    labels_mirrored = ru.mirror_array(mask_labels, show_image=debug)
-    weights_mirrored = ru.mirror_array(mask_weights, show_image=debug)
-    
-    if debug:
-        plt.title("mirrored")
-        plt.imshow(im_mirrored)
-        plt.show()
-        plt.title("mirrored")
-        plt.imshow(labels_mirrored)
-        plt.show()
-        plt.title("mirrored")
-        plt.imshow(weights_mirrored)
-        plt.show()
-    
-    list_images_aug.append(im_mirrored) 
-    list_labels_aug.append(labels_mirrored)
-    list_weights_aug.append(weights_mirrored)
 
-    ##### TRANSLATE DATA
-    # translate returns tuples with left and right shifted images
-    translated_images, translated_labels, translated_weights = ru.translations(image, mask_labels, mask_weights, show_image=debug)
-    for t_im, t_labels, t_weights in zip(translated_images, translated_labels, translated_weights):
-        list_images_aug.append(t_im)
-        list_labels_aug.append(t_labels)
-        list_weights_aug.append(t_weights)
+    # load subset of folds 
+    list_images = [train_set["image"] for train_set in dict_folds[fold]["train_set"]]
+    list_labels = [train_set["m_labels"] for train_set in dict_folds[fold]["train_set"]]
+    list_weights = [train_set["m_weights"] for train_set in dict_folds[fold]["train_set"]]
+    
+    # storage lists
+    list_images_aug = []
+    list_labels_aug = []
+    list_weights_aug = []
+    
+    for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_labels, list_weights)):
+        pass
+        print(f"Augmenting image: {pos+1}/{len(list_images)}")
+              
+        ##### MIRROR DATA
+        debug = True
+        im_mirrored = ru.mirror_array(image, show_image=debug)
+        labels_mirrored = ru.mirror_array(mask_labels, show_image=debug)
+        weights_mirrored = ru.mirror_array(mask_weights, show_image=debug)
+        
         if debug:
-            plt.title("translate")
-            plt.imshow(t_im)
+            plt.title("mirrored")
+            plt.imshow(im_mirrored)
             plt.show()
-            plt.title("translate")
-            plt.imshow(t_labels)
+            plt.title("mirrored")
+            plt.imshow(labels_mirrored)
             plt.show()
-            plt.title("translate")
-            plt.imshow(t_weights)
+            plt.title("mirrored")
+            plt.imshow(weights_mirrored)
             plt.show()
-            
-   
-    ##### SCALE DATA
-    num_rows, num_cols = image.shape
-    resize_percent = 1.1
-    scaled_rows_size = int(num_rows*resize_percent)
-    scaled_cols_size = int(num_cols*resize_percent)
-    
-    
-    im_scaled = skimage.transform.resize(image,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
-    labels_scaled = skimage.transform.resize(mask_labels,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
-    weights_scaled = skimage.transform.resize(mask_weights,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
-    
-    if debug:
-        plt.title("scaled")
-        plt.imshow(im_scaled)
-        plt.show()
-        plt.title("scaled")
-        plt.imshow(labels_scaled)
-        plt.show()
-        plt.title("scaled")
-        plt.imshow(weights_scaled)
-        plt.show()
-    
-    # clean up mask
-    # weight_bg, weight_layer, weight_transition = np.unique(mask_weights)
-    # weights_scaled[(weights_scaled > weight_layer) * (weights_scaled < (weight_transition*0.6))] = weight_layer # arbitrary threshold based on looking at the mask
-    # weights_scaled[weights_scaled >= weight_transition*0.6] = weight_transition
-    # weights_scaled[weights_scaled < weight_layer] = weight_bg
-    
-    # resize to original rows/cols
-    # calculate center of image
-    rows_offset = scaled_rows_size - num_rows
-    cols_offset = scaled_cols_size - num_cols
-    
-    # calculate slicing for proper dimensions
-    rows_start = int(np.floor(rows_offset/2))
-    rows_end = int(np.ceil(rows_offset/2))
-    cols_start = int(np.floor(cols_offset/2))
-    cols_end = int(np.ceil(cols_offset/2))
-    
-    # add to dataset and crop to dimensions
-    list_images_aug.append(im_scaled[rows_start:-rows_end,cols_start:-cols_end])
-    list_labels_aug.append(labels_scaled[rows_start:-rows_end,cols_start:-cols_end])
-    list_weights_aug.append(weights_scaled[rows_start:-rows_end,cols_start:-cols_end])
-    
-    
-    ##### REFOCUSING AUGMENTATION
-    # collapse into 2d to find if placeta near the top
-    projection_rows = np.sum(mask_labels-1, axis=1) # offset labels so top bg gets value of zero, then sum across cols
-    percent_threshold = 0.1 # threshold reached for 50% crop and reposition
-    threshold_pixels = percent_threshold * len(projection_rows)
-    if np.sum(projection_rows[:int(np.floor(threshold_pixels))]) > 20: # if image near the top of the focal field, augment | arbitrary 20 to avoid augmentation from noise
         
-        print(f"Refocusing augmenting for image {pos+1}")    
-        # roll down and fill top with zeros    
-        im_rows, _ = image.shape
-        roll_value = int(np.floor(im_rows/2)) # roll by 50%
+        list_images_aug.append(im_mirrored) 
+        list_labels_aug.append(labels_mirrored)
+        list_weights_aug.append(weights_mirrored)
+    
+        ##### TRANSLATE DATA
+        # translate returns tuples with left and right shifted images
+        translated_images, translated_labels, translated_weights = ru.translations(image, mask_labels, mask_weights, show_image=debug)
+        for t_im, t_labels, t_weights in zip(translated_images, translated_labels, translated_weights):
+            list_images_aug.append(t_im)
+            list_labels_aug.append(t_labels)
+            list_weights_aug.append(t_weights)
+            if debug:
+                plt.title("translate")
+                plt.imshow(t_im)
+                plt.show()
+                plt.title("translate")
+                plt.imshow(t_labels)
+                plt.show()
+                plt.title("translate")
+                plt.imshow(t_weights)
+                plt.show()
+                
+       
+        ##### SCALE DATA
+        num_rows, num_cols = image.shape
+        resize_percent = 1.1
+        scaled_rows_size = int(num_rows*resize_percent)
+        scaled_cols_size = int(num_cols*resize_percent)
         
-        # for array in [image, mask_labels, mask_weights]:
-        #     plt.imshow(array)
-        #     plt.show()
         
-        # roll down
-        rolled_image = np.roll(image, roll_value, axis=0)
-        rolled_labels = np.roll(mask_labels, roll_value, axis=0)
-        rolled_weights = np.roll(mask_weights, roll_value, axis=0)
+        im_scaled = skimage.transform.resize(image,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
+        labels_scaled = skimage.transform.resize(mask_labels,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
+        weights_scaled = skimage.transform.resize(mask_weights,(scaled_rows_size, scaled_cols_size), preserve_range = True, anti_aliasing=False, order=0)
         
-        # blank top portion
-        rolled_image[:roll_value] = 0 # make bg 
-        rolled_labels[:roll_value] = np.unique(mask_labels)[0] # first layer is bg
-        rolled_weights[:roll_value] = np.min(mask_weights) # this is bg weight
-        
-        list_images_aug.append(rolled_image)
-        list_labels_aug.append(rolled_labels)
-        list_weights_aug.append(rolled_weights)
-        
-               
         if debug:
-            plt.title("refocusing augmentation")
-            plt.imshow(rolled_image)
+            plt.title("scaled")
+            plt.imshow(im_scaled)
             plt.show()
-            plt.title("refocusing augmentation")
-            plt.imshow(rolled_labels)
+            plt.title("scaled")
+            plt.imshow(labels_scaled)
             plt.show()
-            plt.title("refocusing augmentation")
-            plt.imshow(rolled_weights)
+            plt.title("scaled")
+            plt.imshow(weights_scaled)
             plt.show()
     
-        # for array in [rolled_image, rolled_labels, rolled_weights]:
-        #     plt.imshow(array)
-        #     plt.show()
+        # resize to original rows/cols
+        # calculate center of image
+        rows_offset = scaled_rows_size - num_rows
+        cols_offset = scaled_cols_size - num_cols
         
-        # plt.imshow(np.random.random((1,1024)))
-        # plt.show()
-    
-    fill_constant_value_labels = np.unique(mask_labels)[0] # fill with bg , label 0
-    fill_constant_value_weights = np.unique(mask_weights)[0]
-    
-    # rotate 
-    im_rotate_plus_10 = ru.rotate_image(image, 10, show_image=debug)
-    labels_rotate_plus_10 = ru.rotate_mask(mask_labels, 10,fill_constant_value_labels, show_image=debug)  
-    weights_rotate_plus_10 = ru.rotate_mask(mask_weights, 10, fill_constant_value_weights, show_image=debug)
-    
-    list_images_aug.append(im_rotate_plus_10)
-    list_labels_aug.append(labels_rotate_plus_10)
-    list_weights_aug.append(weights_rotate_plus_10)
-    
-    im_rotate_minus_10 = ru.rotate_image(image, -10, show_image=debug)
-    labels_rotate_minus_10 = ru.rotate_mask(mask_labels, -10, fill_constant_value_labels, show_image=debug)  
-    weights_rotate_minus_10 = ru.rotate_mask(mask_weights, -10, fill_constant_value_weights, show_image=debug)
-    
-    list_images_aug.append(im_rotate_minus_10)
-    list_labels_aug.append(labels_rotate_minus_10)
-    list_weights_aug.append(weights_rotate_minus_10)
-
-#%% add lists to dataset 
-    
-list_images += list_images_aug
-list_labels += list_labels_aug
-list_weights += list_weights_aug
-
-#%%
-num_images = len(list_images)
-             
-# paper stated these dimensions, pad to this below
-paper_arr_rows, paper_arr_cols = (3100,512)
+        # calculate slicing for proper dimensions
+        rows_start = int(np.floor(rows_offset/2))
+        rows_end = int(np.ceil(rows_offset/2))
+        cols_start = int(np.floor(cols_offset/2))
+        cols_end = int(np.ceil(cols_offset/2))
+        
+        # add to dataset and crop to dimensions
+        list_images_aug.append(im_scaled[rows_start:-rows_end,cols_start:-cols_end])
+        list_labels_aug.append(labels_scaled[rows_start:-rows_end,cols_start:-cols_end])
+        list_weights_aug.append(weights_scaled[rows_start:-rows_end,cols_start:-cols_end])
+        
+        
+        ##### REFOCUSING AUGMENTATION
+        # collapse into 2d to find if placeta near the top
+        projection_rows = np.sum(mask_labels-1, axis=1) # offset labels so top bg gets value of zero, then sum across cols
+        percent_threshold = 0.1 # threshold reached for 50% crop and reposition
+        threshold_pixels = percent_threshold * len(projection_rows)
+        if np.sum(projection_rows[:int(np.floor(threshold_pixels))]) > 20: # if image near the top of the focal field, augment | arbitrary 20 to avoid augmentation from noise
             
-# imdb.images.data is a 4D matrix of size: [height, width, color channel (1ch), NumberOfData]
-image_color_channels = 1
-h5_data = np.zeros((num_images, image_color_channels, paper_arr_rows, paper_arr_cols))
+            print(f"Refocusing augmenting for image {pos+1}")    
+            # roll down and fill top with zeros    
+            im_rows, _ = image.shape
+            roll_value = int(np.floor(im_rows/2)) # roll by 50%
+            
+            # for array in [image, mask_labels, mask_weights]:
+            #     plt.imshow(array)
+            #     plt.show()
+            
+            # roll down
+            rolled_image = np.roll(image, roll_value, axis=0)
+            rolled_labels = np.roll(mask_labels, roll_value, axis=0)
+            rolled_weights = np.roll(mask_weights, roll_value, axis=0)
+            
+            # blank top portion
+            rolled_image[:roll_value] = 0 # make bg 
+            rolled_labels[:roll_value] = np.unique(mask_labels)[0] # first layer is bg
+            rolled_weights[:roll_value] = np.min(mask_weights) # this is bg weight
+            
+            list_images_aug.append(rolled_image)
+            list_labels_aug.append(rolled_labels)
+            list_weights_aug.append(rolled_weights)
+            
+                   
+            if debug:
+                plt.title("refocusing augmentation")
+                plt.imshow(rolled_image)
+                plt.show()
+                plt.title("refocusing augmentation")
+                plt.imshow(rolled_labels)
+                plt.show()
+                plt.title("refocusing augmentation")
+                plt.imshow(rolled_weights)
+                plt.show()
+        
+            # for array in [rolled_image, rolled_labels, rolled_weights]:
+            #     plt.imshow(array)
+            #     plt.show()
+            
+            # plt.imshow(np.random.random((1,1024)))
+            # plt.show()
+        
+        fill_constant_value_labels = np.unique(mask_labels)[0] # fill with bg , label 0
+        fill_constant_value_weights = np.unique(mask_weights)[0]
+        
+        # rotate 
+        im_rotate_plus_10 = ru.rotate_image(image, 10, show_image=debug)
+        labels_rotate_plus_10 = ru.rotate_mask(mask_labels, 10,fill_constant_value_labels, show_image=debug)  
+        weights_rotate_plus_10 = ru.rotate_mask(mask_weights, 10, fill_constant_value_weights, show_image=debug)
+        
+        list_images_aug.append(im_rotate_plus_10)
+        list_labels_aug.append(labels_rotate_plus_10)
+        list_weights_aug.append(weights_rotate_plus_10)
+        
+        im_rotate_minus_10 = ru.rotate_image(image, -10, show_image=debug)
+        labels_rotate_minus_10 = ru.rotate_mask(mask_labels, -10, fill_constant_value_labels, show_image=debug)  
+        weights_rotate_minus_10 = ru.rotate_mask(mask_weights, -10, fill_constant_value_weights, show_image=debug)
+        
+        list_images_aug.append(im_rotate_minus_10)
+        list_labels_aug.append(labels_rotate_minus_10)
+        list_weights_aug.append(weights_rotate_minus_10)
+        
 
-# imdb.images.labels is a 4D matrix of size: [height, width, 2, NumberOfData] 
-dim_class_and_weights = 2 # ---> 1st Channel is class (1,2,... etc), 2nd channel is Instance Weights (All voxels with a class label is assigned a weight, details in paper)
-h5_labels = np.zeros((num_images, dim_class_and_weights, paper_arr_rows, paper_arr_cols))
-
-# imdb.images.set is [1,NumberOfData] vector with entries 1 or 3 indicating which data is for training and validation respectively.
-# h5_set = np.zeros((1, num_images))
-# ID for training or testing
-dim_train_test_id = 1
-h5_set = np.ones((num_images, dim_train_test_id))
-
     
-# shuffle lists
-# RANDOMIZE!
-list_all = list(zip(list_images, list_labels, list_weights))
-random.shuffle(list_all)    
-
-# iterate through the number of images and make h5 stacks
-for idx, (image, labels, weights) in enumerate(list_all):
-    pass
-    print(f"Adding image to h5 stack {idx+1}/{len(list_images)}")
-    ###
-    #they orient their images vertically, transpose
-    image = image.transpose()
-    labels = labels.transpose()
-    weights = weights.transpose()
+    ##%% combine training and testing into the same array for packaging 
     
-    # get image shape
-    img_rows, img_cols = image.shape
-    
-    # calculate padding for desired size
-    # rows/height
-    num_rows_to_pad = paper_arr_rows - img_rows if paper_arr_rows > img_rows else 0
-    rows_before = int(np.floor(num_rows_to_pad/2))
-    rows_after = int(np.ceil(num_rows_to_pad/2))
-    
-    # cols/width 
-    num_cols_to_pad = paper_arr_cols - img_cols if paper_arr_cols > img_cols else 0
-    # cols_before = int(np.floor(num_cols_to_pad/2))
-    # cols_after = int(np.ceil(num_cols_to_pad/2))
+        # load subset of folds 
+    list_images_test = [test_set["image"] for test_set in dict_folds[fold]["test_set"]]
+    list_labels_test = [test_set["m_labels"] for test_set in dict_folds[fold]["test_set"]]
+    list_weights_test = [test_set["m_weights"] for test_set in dict_folds[fold]["test_set"]]
     
     
-    # h5 images
-    h5_data[idx,...] = idx
-    channel = 0
+    # save these for H5_set creation
+    n_training  = len(list_images + list_images_aug) 
+    n_testing = len(list_images_test)
     
-    # trim height to 740
-    #image = image[:paper_arr_rows, :] # pad height
+    #combine all into one array
+    list_images += list_images_aug + list_images_test
+    list_labels += list_labels_aug + list_labels_test
+    list_weights += list_weights_aug + list_weights_test
     
-    # pad to size of img_rows, img_cols
-    # only pad front 
-    image = np.pad(image,  # pad width
-                   ((rows_before,rows_after),(num_cols_to_pad,0)), # this takes in width(cols) and height(rows)
-                   'constant', constant_values=0 
-                   )
-
-    h5_data[idx,channel,:,:] =  image  # shift vertically
+    ## FROM RELAYNET SEGMENTATION
+    # imdb.images.set is [1,NumberOfData] vector with entries 1 or 3 indicating which data is for training and validation respectively.
+    # h5_set = np.zeros((1, num_images))
+    # ID for training or testing
+    dim_train_test_id = 1
+    h5_set = np.zeros((len(list_images), dim_train_test_id))
     
-    # h5 labels 
-    dim_class = 0
-    dim_weights = 1
+    class_validation = 3
+    class_training = 1
+    h5_set[:n_training, 0] = class_training
+    h5_set[n_training:, 0] = class_validation
     
-    ###
-    #labels = labels[:paper_arr_rows, :] # trim height
-    top_layer = int(np.unique(labels)[-1]) # last layer value
-    bottom_layer = int(np.unique(labels)[0]) # first layer
-    labels = np.pad(labels,  # pad width
-       ((rows_before,rows_after),(num_cols_to_pad,0)),
-       'constant', constant_values=((0,0),(bottom_layer,top_layer)) # fill with area above retina 
-       )
-
-    weights = weights[:paper_arr_rows, :] # trim height
-    weights = np.pad(weights,  # pad width
-       ((rows_before,rows_after),(num_cols_to_pad,0)), #pad at front only
-       'constant', constant_values= 1  # fill with bg value 
-       )
-
-    ###
     
-    h5_labels[idx, dim_class, :, :] = labels # pad to size of img_rows, img_cols
-    h5_labels[idx,dim_weights, :, :] = weights  # pad to size of img_rows, img_cols
+    ##%% instantiate data arrays
+    num_images = len(list_images)
+                 
+    # paper stated these dimensions, pad to this below
+    paper_arr_rows, paper_arr_cols = (3100,512)
+                
+    # imdb.images.data is a 4D matrix of size: [height, width, color channel (1ch), NumberOfData]
+    image_color_channels = 1 #1 channel so grayscale
+    h5_data = np.zeros((num_images, image_color_channels, paper_arr_rows, paper_arr_cols))
+    
+    # imdb.images.labels is a 4D matrix of size: [height, width, 2, NumberOfData] 
+    dim_class_and_weights = 2 # ---> 1st Channel is class (1,2,... etc), 2nd channel is Instance Weights (All voxels with a class label is assigned a weight, details in paper)
+    h5_labels = np.zeros((num_images, dim_class_and_weights, paper_arr_rows, paper_arr_cols))
     
 
-# split dataset
-percent_class_training = 0.8 # class 1 = training
-class_validation = 3
-h5_set[int(num_images*percent_class_training):, 0] = class_validation
     
-#EXPORT DATASETS
-   
-with h5py.File(f"{str(path_h5_output / 'data_w_augs.h5')}", 'w') as f:
-    f.create_dataset('oct_data', data = h5_data.astype(np.float64, copy=False))
-with h5py.File(f"{str(path_h5_output / 'labels_w_augs.h5')}", 'w') as f:
-    f.create_dataset('oct_labels', data = h5_labels.astype(np.float64, copy=False))  
-with h5py.File(f"{str(path_h5_output / 'set_w_augs.h5')}", 'w') as f:
-    f.create_dataset('oct_set', data = h5_set.astype(np.float64, copy=False))  
+    ##%%
 
-print(f"output directory: {path_h5_output}")
+    list_all = list(zip(list_images, list_labels, list_weights))
+    
+    # iterate through the number of images and make h5 stacks
+    for idx, (image, labels, weights) in enumerate(list_all):
+        pass
+        print(f"Adding image to h5 stack {idx+1}/{len(list_images)}")
+        ###
+        #they orient their images vertically, transpose
+        image = image.transpose()
+        labels = labels.transpose()
+        weights = weights.transpose()
+        
+        # get image shape
+        img_rows, img_cols = image.shape
+        
+        # calculate padding for desired size
+        # rows/height
+        num_rows_to_pad = paper_arr_rows - img_rows if paper_arr_rows > img_rows else 0
+        rows_before = int(np.floor(num_rows_to_pad/2))
+        rows_after = int(np.ceil(num_rows_to_pad/2))
+        
+        # cols/width 
+        num_cols_to_pad = paper_arr_cols - img_cols if paper_arr_cols > img_cols else 0
+        # cols_before = int(np.floor(num_cols_to_pad/2))
+        # cols_after = int(np.ceil(num_cols_to_pad/2))
+        
+        
+        # h5 images
+        h5_data[idx,...] = idx
+        channel = 0
+        
+        # trim height to 740
+        #image = image[:paper_arr_rows, :] # pad height
+        
+        # pad to size of img_rows, img_cols
+        # only pad front 
+        image = np.pad(image,  # pad width
+                       ((rows_before,rows_after),(num_cols_to_pad,0)), # this takes in width(cols) and height(rows)
+                       'constant', constant_values=0 
+                       )
+    
+        h5_data[idx,channel,:,:] =  image  # shift vertically
+        
+        # h5 labels 
+        dim_class = 0
+        dim_weights = 1
+        
+        ###
+        #labels = labels[:paper_arr_rows, :] # trim height
+        top_layer = int(np.unique(labels)[-1]) # last layer value
+        bottom_layer = int(np.unique(labels)[0]) # first layer
+        labels = np.pad(labels,  # pad width
+           ((rows_before,rows_after),(num_cols_to_pad,0)),
+           'constant', constant_values=((0,0),(bottom_layer,top_layer)) # fill with area above retina 
+           )
+    
+        weights = weights[:paper_arr_rows, :] # trim height
+        weights = np.pad(weights,  # pad width
+           ((rows_before,rows_after),(num_cols_to_pad,0)), #pad at front only
+           'constant', constant_values= 1  # fill with bg value 
+           )
+    
+        ###
+        
+        h5_labels[idx, dim_class, :, :] = labels # pad to size of img_rows, img_cols
+        h5_labels[idx,dim_weights, :, :] = weights  # pad to size of img_rows, img_cols
+        
+    
+
+    
+    
+    #EXPORT DATASETS
+    filename = path_h5_output / f"data_w_augs_{fold}.h5"
+    with h5py.File(str(filename), 'w') as f:
+        f.create_dataset('oct_data', data = h5_data.astype(np.float64, copy=False))
+    
+    filename = path_h5_output / f"labels_w_augs_{fold}.h5"
+    with h5py.File(f"{str(path_h5_output / 'labels_w_augs_{fold}.h5')}", 'w') as f:
+        f.create_dataset('oct_labels', data = h5_labels.astype(np.float64, copy=False))  
+        
+    filename = path_h5_output / f"set_w_augs_{fold}.h5"  
+    with h5py.File(f"{str(path_h5_output / 'set_w_augs_{fold}.h5')}", 'w') as f:
+        f.create_dataset('oct_set', data = h5_set.astype(np.float64, copy=False))  
+    
+    print(f"output directory: {path_h5_output}")
 
 
