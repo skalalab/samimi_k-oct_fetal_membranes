@@ -187,9 +187,9 @@ for idx, fold in enumerate(dict_kfold_indices.keys()):
 dict_fold_augs = {}
 
 for fold_idx, fold in enumerate(dict_folds.keys()):
-    print(f"Processing {fold}:  {fold_idx+1}/{len(dict_folds.keys())})")
+    print(f"Packaging {fold}:  {fold_idx+1}/{len(dict_folds.keys())}")
     pass
-
+    debug = False
     # load subset of folds 
     list_images = [train_set["image"] for train_set in dict_folds[fold]["train_set"]]
     list_labels = [train_set["m_labels"] for train_set in dict_folds[fold]["train_set"]]
@@ -205,7 +205,7 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
         print(f"Augmenting image: {pos+1}/{len(list_images)}")
               
         ##### MIRROR DATA
-        debug = True
+
         im_mirrored = ru.mirror_array(image, show_image=debug)
         labels_mirrored = ru.mirror_array(mask_labels, show_image=debug)
         weights_mirrored = ru.mirror_array(mask_weights, show_image=debug)
@@ -407,7 +407,7 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
     # iterate through the number of images and make h5 stacks
     for idx, (image, labels, weights) in enumerate(list_all):
         pass
-        print(f"Adding image to h5 stack {idx+1}/{len(list_images)}")
+        print(f"Adding image to h5 stack {idx+1}/{len(list_all)}")
         ###
         #they orient their images vertically, transpose
         image = image.transpose()
@@ -424,6 +424,9 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
         rows_after = int(np.ceil(num_rows_to_pad/2))
         
         # cols/width 
+        # trim height to 740
+        #image = image[:paper_arr_rows, :] # pad height
+        
         num_cols_to_pad = paper_arr_cols - img_cols if paper_arr_cols > img_cols else 0
         # cols_before = int(np.floor(num_cols_to_pad/2))
         # cols_after = int(np.ceil(num_cols_to_pad/2))
@@ -432,9 +435,6 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
         # h5 images
         h5_data[idx,...] = idx
         channel = 0
-        
-        # trim height to 740
-        #image = image[:paper_arr_rows, :] # pad height
         
         # pad to size of img_rows, img_cols
         # only pad front 
@@ -470,20 +470,23 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
         h5_labels[idx,dim_weights, :, :] = weights  # pad to size of img_rows, img_cols
         
     
-
-    
-    
     #EXPORT DATASETS
-    filename = path_h5_output / f"data_w_augs_{fold}.h5"
+    print("saving datasets to h5")
+    # make folder to store fold
+    path_h5_output_subfolder = path_h5_output / f"{fold}"
+    path_h5_output_subfolder.mkdir(exist_ok=True)
+    
+    filename = path_h5_output_subfolder / f"data_w_augs_{fold}.h5"
+    
     with h5py.File(str(filename), 'w') as f:
         f.create_dataset('oct_data', data = h5_data.astype(np.float64, copy=False))
     
-    filename = path_h5_output / f"labels_w_augs_{fold}.h5"
-    with h5py.File(f"{str(path_h5_output / 'labels_w_augs_{fold}.h5')}", 'w') as f:
+    filename = path_h5_output_subfolder / f"labels_w_augs_{fold}.h5"
+    with h5py.File(str(filename), 'w') as f:
         f.create_dataset('oct_labels', data = h5_labels.astype(np.float64, copy=False))  
         
-    filename = path_h5_output / f"set_w_augs_{fold}.h5"  
-    with h5py.File(f"{str(path_h5_output / 'set_w_augs_{fold}.h5')}", 'w') as f:
+    filename = path_h5_output_subfolder / f"set_w_augs_{fold}.h5"  
+    with h5py.File(str(filename), 'w') as f:
         f.create_dataset('oct_set', data = h5_set.astype(np.float64, copy=False))  
     
     print(f"output directory: {path_h5_output}")
