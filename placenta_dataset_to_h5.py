@@ -186,7 +186,7 @@ for idx, fold in enumerate(dict_kfold_indices.keys()):
 # store augmentations for each fold
 dict_fold_augs = {}
 
-for fold_idx, fold in enumerate(list(dict_folds.keys())[0]): # export one model
+for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # export one model
 # for fold_idx, fold in enumerate(dict_folds.keys()):
     print(f"Packaging {fold}:  {fold_idx+1}/{len(dict_folds.keys())}")
     pass
@@ -371,16 +371,16 @@ for fold_idx, fold in enumerate(list(dict_folds.keys())[0]): # export one model
     # list_labels_aug = list_labels_aug[:split_index]
     # list_weights_aug = list_weights_aug[:split_index]
 
-    
+    # save these for H5_set creation
+    n_training  = len(list_images) 
+    n_testing = len(list_images_test)    
+
     # add augmetnations to training set
     # TODO re-include augmented
     list_images += list_images_test# + list_images_aug #
     list_labels +=  list_labels_test# + list_labels_aug
     list_weights +=  list_weights_test# + list_weights_aug
     
-    # save these for H5_set creation
-    n_training  = len(list_images) 
-    n_testing = len(list_images_test)
     
     ## FROM RELAYNET SEGMENTATION
     #  entries 1 or 3 indicating which data is for training and validation respectively.
