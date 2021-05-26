@@ -151,11 +151,11 @@ for im, m_labels, m_weights, p_frame, p_rois in list(zip(list_images, list_label
     list_list_frame_set.append(dict_set)
                                                      
 
-#%% do the splitting here
+#%% splitting into test/train here
 
 kf = KFold(n_splits=10, shuffle=True,  random_state=33)
 
-dict_kfold_indices = {}
+dict_kfold_indices = {} # dictionary of fold indices based split by cross validation
 for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_frame_set))):
     print("-" * 50)
     print(f"train: {train_indices}")
@@ -167,7 +167,7 @@ for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_fram
         }
 
 # split images according to folds
-dict_folds = {}
+dict_folds = {} # holds cross validation datasets
 ## iterate through 
 for idx, fold in enumerate(dict_kfold_indices.keys()):
     pass
@@ -186,7 +186,8 @@ for idx, fold in enumerate(dict_kfold_indices.keys()):
 # store augmentations for each fold
 dict_fold_augs = {}
 
-for fold_idx, fold in enumerate(dict_folds.keys()):
+for fold_idx, fold in enumerate(list(dict_folds.keys())[0]): # export one model
+# for fold_idx, fold in enumerate(dict_folds.keys()):
     print(f"Packaging {fold}:  {fold_idx+1}/{len(dict_folds.keys())}")
     pass
     debug = False
@@ -195,11 +196,12 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
     list_labels = [train_set["m_labels"] for train_set in dict_folds[fold]["train_set"]]
     list_weights = [train_set["m_weights"] for train_set in dict_folds[fold]["train_set"]]
     
-    # storage lists
+    # lists that store augmentations
     list_images_aug = []
     list_labels_aug = []
     list_weights_aug = []
     
+    # do augmentations 
     for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_labels, list_weights)):
         pass
         print(f"Augmenting image: {pos+1}/{len(list_images)}")
@@ -356,27 +358,34 @@ for fold_idx, fold in enumerate(dict_folds.keys()):
     
     ##%% combine training and testing into the same array for packaging 
     
-        # load subset of folds 
+    # load subset of folds 
     list_images_test = [test_set["image"] for test_set in dict_folds[fold]["test_set"]]
     list_labels_test = [test_set["m_labels"] for test_set in dict_folds[fold]["test_set"]]
     list_weights_test = [test_set["m_weights"] for test_set in dict_folds[fold]["test_set"]]
     
     
+    ### trim half the augmented set to test memeory allocation
+    ## TODO undo this!
+    # split_index = int(len(list_images_aug)/6)
+    # list_images_aug = list_images_aug[:split_index]
+    # list_labels_aug = list_labels_aug[:split_index]
+    # list_weights_aug = list_weights_aug[:split_index]
+
+    
+    # add augmetnations to training set
+    # TODO re-include augmented
+    list_images += list_images_test# + list_images_aug #
+    list_labels +=  list_labels_test# + list_labels_aug
+    list_weights +=  list_weights_test# + list_weights_aug
+    
     # save these for H5_set creation
-    n_training  = len(list_images + list_images_aug) 
+    n_training  = len(list_images) 
     n_testing = len(list_images_test)
     
-    #combine all into one array
-    list_images += list_images_aug + list_images_test
-    list_labels += list_labels_aug + list_labels_test
-    list_weights += list_weights_aug + list_weights_test
-    
     ## FROM RELAYNET SEGMENTATION
-    # imdb.images.set is [1,NumberOfData] vector with entries 1 or 3 indicating which data is for training and validation respectively.
-    # h5_set = np.zeros((1, num_images))
-    # ID for training or testing
+    #  entries 1 or 3 indicating which data is for training and validation respectively.
     dim_train_test_id = 1
-    h5_set = np.zeros((len(list_images), dim_train_test_id))
+    h5_set = np.zeros((len(list_images), dim_train_test_id)) # (image_number, train_test_id)
     
     class_validation = 3
     class_training = 1
