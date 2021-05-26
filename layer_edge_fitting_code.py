@@ -111,11 +111,17 @@ def compute_layer_thickness(mask, method, debug=True):
     
         ###### apply hampel filter to remove outliers
         series_heights = pd.Series(list_vertex_heights)    
-        series_heights_cleaned = hampel(series_heights, window_size=11, n=1) # window size was 3
+        list_heights_cleaned = hampel(series_heights, window_size=11, n=1) # window size was 3
+        
+        len(list_vertex_rows)
+        len(list_vertex_heights)
+        print(len(series_heights))
+        print(len(list_heights_cleaned))
         
         if debug:
             plt.title("red: original, black: after hampel filter")
             series_heights.plot(style="r-", alpha=1)
+            series_heights_cleaned = pd.Series(list_heights_cleaned)  
             series_heights_cleaned.plot(style="k-", alpha=1)
             plt.show()
         

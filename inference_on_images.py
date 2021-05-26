@@ -19,7 +19,7 @@ import os
 from layer_edge_fitting_code import compute_layer_thickness
 
 # set cwd to relaynet directory
-os.chdir("/home/skalalab/Desktop/development/relaynet_pytorch")
+# os.chdir("/home/skalalab/Desktop/development/relaynet_pytorch")
 
 # in spyder change figures to show higher, otherwise it shows gaps in layers
 mpl.rcParams['figure.dpi'] = 300
@@ -31,8 +31,8 @@ mpl.rcParams['figure.dpi'] = 300
 # path_images = path_images / "images"
 
 # images in completed
-# base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
-base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+# base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # path_image = base_path / ""
 
 # path_image = base_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
@@ -41,8 +41,9 @@ base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.
 # path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 # path_image = base_path / "2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D/2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
-path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
+# path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
 
+path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_pericervical\2019_02_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D.tiff".replace('\\','/'))
 
 # path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D.tiff"
 
@@ -136,12 +137,12 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         image[0, 0, ...] = im
 
         # path_model = Path("Z:/0-Projects and Experiments/KS - OCT membranes/trained_models/relaynet_model.model")
-        path_model = Path(
-            "Z:/0-Projects and Experiments/KS - OCT membranes/trained_models/relaynet_model_w_augs.model")
+        # path_model = Path(
+            # "Z:/0-Projects and Experiments/KS - OCT membranes/trained_models/relaynet_model_w_augs.model")
         # path_model = Path("/home/skalalab/Desktop/relaynet_model_w_augs.model")
-        path_model = Path(
-            "/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/trained_models")
-        path_model = path_model / "relaynet_model_w_augs_10_21_2020.model"
+        # path_model = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/trained_models")
+        # path_model = path_model / "relaynet_model_w_augs_10_21_2020.model"
+        path_model = Path(r"C:\Users\OCT\Desktop\development\relaynet_pytorch\models\relaynet_model_fold_0.model".replace('\\','/'))
 
         relaynet_model = torch.load(str(path_model))
         # out = relaynet_model(Variable(torch.Tensor(test_data.X[0:1]).cuda(),volatile=True)) # originally
@@ -163,6 +164,10 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         list_inferences_colored.append(label_img_to_rgb(idx))
 # %%
 
+for im in list_inferences[:10]:
+    plt.imshow(im)
+    plt.show()
+#%%
 # save labeled mask
 # make tiffs
 # tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
@@ -210,8 +215,8 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
 
 
 # Hide RankWarning for RANSACregression
-import warnings
-warnings.filterwarnings(action="once")
+# import warnings
+# warnings.filterwarnings(action="once")
 
 
 list_decidua_thickness = []
@@ -249,7 +254,7 @@ for frame_num, (image, labels) in enumerate(zip(list_images[:10], list_inference
         # convert layer to ints
         layer_mask = (labels == layer_num).astype(int)
 
-        debug = False
+        debug = True
         # calculate layer length
         #skel = skeletonize(layer_mask, method='lee').astype(int)
 
@@ -278,8 +283,9 @@ for frame_num, (image, labels) in enumerate(zip(list_images[:10], list_inference
             plt.show()
 
         ### start function for thickness calculation
+        print("calculating thickness")
         layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, debug=True)
-
+        print(" after calculating thickness")
 
         # add to list for plotting
         list_data_layers.append(layer_thickness)
