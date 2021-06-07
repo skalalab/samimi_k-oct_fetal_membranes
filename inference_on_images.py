@@ -17,6 +17,8 @@ from skimage import morphology
 from skimage.measure import label, regionprops
 import os
 from layer_edge_fitting_code import compute_layer_thickness
+import pandas as pd
+
 
 # set cwd to relaynet directory
 # os.chdir("/home/skalalab/Desktop/development/relaynet_pytorch")
@@ -43,9 +45,18 @@ base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3
 # path_image = base_path / "2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
 # path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
 
-path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_pericervical\2019_02_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D.tiff".replace('\\','/'))
+# path_image = base_path / r"2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 
+
+path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D.tiff"
+# path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
+
+# for soft tissue lab 
+# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_pericervical\2019_02_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D.tiff".replace('\\','/'))
+# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_periplacental\2019_02_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff".replace('\\','/'))
 # path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D.tiff"
+# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2020_12_18_C_section_39w0d\Inflation\2020_12_18_C_section_39w0d_pericervical_amniochorion\2020_12_18_C_section_39w0d_pericervical_amniochorion_0001_Mode2D.tiff".replace("\\","/")) 
+# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_periplacental\2019_02_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff".replace("\\","/"))
 
 
 # images not yet segmented
@@ -144,6 +155,7 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         # path_model = path_model / "relaynet_model_w_augs_10_21_2020.model"
         path_model = Path(r"C:\Users\OCT\Desktop\development\relaynet_pytorch\models\relaynet_model_fold_0.model".replace('\\','/'))
 
+
         relaynet_model = torch.load(str(path_model))
         # out = relaynet_model(Variable(torch.Tensor(test_data.X[0:1]).cuda(),volatile=True)) # originally
         # out = relaynet_model(torch.Tensor(image).cuda())
@@ -164,7 +176,9 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         list_inferences_colored.append(label_img_to_rgb(idx))
 # %%
 
-for im in list_inferences[:10]:
+for im in list_inferences[300:311]:
+# for im in list_inferences_colored[:10]:
+    
     plt.imshow(im)
     plt.show()
 #%%
@@ -214,18 +228,13 @@ for im in list_inferences[:10]:
 # generate plots from calculations
 
 
-# Hide RankWarning for RANSACregression
-# import warnings
-# warnings.filterwarnings(action="once")
-
-
-list_decidua_thickness = []
-list_chorion_thickness = []
-list_spongy_thickness = []
-list_amnion_thickness = []
-
-list_layer_thickness = [list_decidua_thickness,
-                        list_chorion_thickness, list_spongy_thickness, list_amnion_thickness]
+#store thicknesses per frame for each layer in this dictionary
+dict_lists_layer_thickness = {
+    "decidua": [], # layer 1
+    "chorion": [], # layer 2
+    "spongy": [], # layer 3
+    "amnion": []  # layer 4
+}
 
 edges_decidua = []
 edges_chorion = []
@@ -234,61 +243,52 @@ edges_amnion = []
 list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
 
-for frame_num, (image, labels) in enumerate(zip(list_images[:10], list_inferences), start=1):
+for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences[:308]), start=1): # list_images[:10]
     print(
         f"calculating layer thickness for image: {frame_num}/{len(list_images)}")
     pass
 
-    dict_layers = {
-        1: "decidua",
-        2: "chorion",
-        3: "spongy",
-        4: "amnion"
-    }
 
     # iterate through each layer
     # calculate layer thickness
     # exclude top and bottom layers of placenta
-    for layer_num, list_data_layers, list_data_edges in zip((np.unique(labels)[1:-1]), list_layer_thickness, list_layer_edges):
+    for layer_num, dict_layer_key, list_data_edges in zip((np.unique(labels)[1:-1]), dict_lists_layer_thickness, list_layer_edges):
         pass
         # convert layer to ints
         layer_mask = (labels == layer_num).astype(int)
 
-        debug = True
+        debug = False
         # calculate layer length
-        #skel = skeletonize(layer_mask, method='lee').astype(int)
 
         # CLEAN UP MASKS
-
         # layer_mask = list_inferences[12] == 1
         if debug:
             plt.title(
-                f"original image: {dict_layers[layer_num]} frame {frame_num}")
+                f"original image: {dict_layer_key} frame {frame_num}")
             plt.imshow(image)
             plt.show()
             plt.title(
-                f"original mask: {dict_layers[layer_num]} frame {frame_num}")
+                f"original mask: {dict_layer_key} frame {frame_num}")
             plt.imshow(layer_mask.transpose())
             plt.show()
 
         # binary close (dialte and erode) to fill holes
         # layers are vertcal so make a vertical rectangular element
-        selem_rect = morphology.rectangle(15, 5)
+        selem_rect = morphology.rectangle(15, 5) # size to merge layer pieces if dissconected 
         layer_mask = morphology.binary_closing(
             layer_mask, selem_rect).astype(int)
         if debug:
             plt.title(
-                f"after binary closing: {dict_layers[layer_num]} frame {frame_num}")
+                f"after binary closing: {dict_layer_key} frame {frame_num}")
             plt.imshow(layer_mask.transpose())
             plt.show()
 
         ### start function for thickness calculation
-        print("calculating thickness")
-        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, debug=True)
-        print(" after calculating thickness")
+        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, debug=debug)
 
-        # add to list for plotting
-        list_data_layers.append(layer_thickness)
+    
+        dict_lists_layer_thickness[dict_layer_key].append(layer_thickness)
+        # list_data_layers.append(layer_thickness)
 
         #save binary mask of edges to displaylater
         
@@ -305,56 +305,24 @@ for frame_num, (image, labels) in enumerate(zip(list_images[:10], list_inference
         # plt.show()
         list_data_edges.append(mask_edges)
                
-        ## make masks to draw over
-        
-        # list_data_edges.append(mask_edges)
 
-        # # PLOT IMAGE, MASK AND EDGES FOR DEBUGGING
-        # # if layer_num == 1:  # which layer to debug
-        # plt.title(f"{dict_layers[layer_num]} edges from frame {frame_num}")
+# %%## 
 
-        # # format original image
-        # plot_image = image[:, 50:-50]
-        # plot_image = cv2.cvtColor(plot_image, cv2.COLOR_GRAY2RGB)
-
-        # # add layer shape labels
-        # plot_labels = layer_mask
-        
-        # # take last 265 pixels which are what corresponds to original image
-        # # because we added padding on top of the image
-        # plot_labels = plot_labels[..., -265:].transpose()
-        # plot_labels = plot_labels.astype(np.float32)
-        # plot_labels = cv2.cvtColor(plot_labels, cv2.COLOR_GRAY2RGB)
-        # blue = (81, 220, 220)
-        # l_mask = layer_mask.astype(bool)[..., -265:].transpose()
-        # plot_labels[l_mask] = blue
-        # plot_labels = plot_labels.astype(np.uint8)
-        # overlayed_im_labels = cv2.addWeighted(
-        #     plot_image, 1, plot_labels, 0.5, 0)
-
-
-        # plt.imshow(overlayed_im_labels)
-        # plt.show()
-        # print(f"frame: {frame_num} top layer length: {layer_top_length}  bottom layer length: {layer_bottom_length}  mask area: {mask_area}  layer thickness: {layer_thickness}")
-
-
-
-# %%## combine all edges into a single mask 
+# combine all edges into a single mask 
 edge_masks = []
-
 for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer_edges)):
     combined_mask = e_decidua + e_chorion + e_spongy + e_amnion
     edge_masks.append(combined_mask)
 
 # save labeled mask
 # make tiffs of original, colored overlayed predictions and edges
-tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
+# tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
 print("saving tiff overlayed output")
 out_path = str(path_image.parent / f"{path_image.stem}_with_overlays.tiff")
 
 # out_path = str( f"/home/skalalab/Desktop/{path_image.stem}_combined_edges.tiff")
 with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
-    for pos, (image, labels, edges) in enumerate(zip(list_images, list_inferences_colored, edge_masks)):
+    for pos, (image, labels, edges) in enumerate(zip(list_images[:308], list_inferences_colored, edge_masks)):
         pass
         # tiff_stack[pos,...] = labels.transpose().astype(int)
         print(f"saving image {pos+1}/{len(list_images)}")
@@ -380,9 +348,9 @@ with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
         edges = edges.astype(np.uint8).transpose() # transpose to make horizontal #astype(np.float32) 
         edges[edges > 0] = 255
         edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
-        edges = edges[-265:,...]
-        edges[...,0] = 0
-        edges[...,2] = 0
+        edges = edges[-265:,...] # take last 265 pixels which are the same size as original image
+        edges[...,0] = 0 # blank out red channel
+        edges[...,2] = 0 # blank out blue channel 
         
         overlayed_edges = cv2.addWeighted(image, 1, edges,1, 0)
 
@@ -397,63 +365,39 @@ with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
         # plt.imshow(stack)
 
         tif.save(stack.astype(np.float32))
-print(f"finished saving combined image: {out_path}")
+print(f"finished saving combined image: {out_path}\n")
+print(f"NOTE: Remember to load the images in imagej as HYPERSTACKS")
 
 # %%
 # plot layer thicknesses
-for thickness_data in list_layer_thickness:
-    plt.plot(thickness_data)
+for thickness_data in dict_lists_layer_thickness:
+    plt.plot(dict_lists_layer_thickness[thickness_data])
     # plots.append(plt.plot(thickness_data))
 
 plt.xlabel("frame(_/sec)")
 plt.ylabel("thickness (pixels)")
 plt.title(f"{path_image.stem}")
-plt.legend(list(dict_layers.values()))
+plt.legend(list(dict_lists_layer_thickness.keys()))
 path_fig_output = path_image.parent / \
-    f"{path_image.stem}_layer_thickness_plot.jpeg"
+    f"{path_image.stem}_thickness.jpeg"
 print(f"figure saved in: {str(path_fig_output)}")
 plt.savefig(str(path_fig_output))
 plt.show()
 
-# plot chorion parameters changing
-# dict_layers = {
-#     1 : "length top layer",
-#     2 : "length bottom layer",
-#     3 : "area",
-#     4 : "thickness calculation"
-# #     }
+#%% save thickness as csv
 
-# # plot top layer:
-# plt.plot(chorion_length_top)
-# plt.xlabel("frame(_/sec)")
-# plt.ylabel("length (pixels)")
-# plt.title(f"{path_image.stem}")
-# plt.legend(["top layer length"])
-# plt.show()
 
-# #bottom layer
-# plt.plot(chorion_length_bottom)
-# plt.xlabel("frame(_/sec)")
-# plt.ylabel("length (pixels)")
-# plt.title(f"{path_image.stem}")
-# plt.legend(["bottom layer length"])
+df_layer_thickness = pd.DataFrame(dict_lists_layer_thickness) # columns=["decidua","chorion", "spongy", "amnion"]
 
-# plt.show()
 
-# # area
-# plt.plot(chorion_area)
-# plt.xlabel("frame(_/sec)")
-# plt.ylabel("length (pixels)")
-# plt.title(f"{path_image.stem}")
-# plt.legend(["layer area"])
-# plt.show()
+## add totals
+df_layer_thickness["total"] = df_layer_thickness["decidua"] + \
+                            df_layer_thickness["chorion"] + \
+                            df_layer_thickness["spongy"] + \
+                            df_layer_thickness["amnion"]
 
-# #thickness
-# plt.plot(list_chorion)
-# plt.xlabel("frame(_/sec)")
-# plt.ylabel("length (pixels)")
-# plt.title(f"{path_image.stem}")
-# plt.legend(["layer thickness"])
-# plt.show()
-
-# # for data in [chorion_length_top, chorion_length_bottom, chorion_area, list_chorion]:
+path_csv_output = path_image.parent / \
+    f"{path_image.stem}_layer_thickness_values.csv"
+    
+df_layer_thickness.to_csv(path_csv_output)
+#%%

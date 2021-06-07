@@ -111,12 +111,12 @@ def compute_layer_thickness(mask, method, debug=True):
     
         ###### apply hampel filter to remove outliers
         series_heights = pd.Series(list_vertex_heights)    
-        list_heights_cleaned = hampel(series_heights, window_size=11, n=1) # window size was 3
+        list_heights_cleaned = hampel(series_heights, window_size=11, n=1, imputation=True) # window size was 3
         
-        len(list_vertex_rows)
-        len(list_vertex_heights)
-        print(len(series_heights))
-        print(len(list_heights_cleaned))
+        # print(len(list_vertex_rows))
+        # print(len(list_vertex_heights))
+        # print(len(series_heights))
+        # print(len(list_heights_cleaned))
         
         if debug:
             plt.title("red: original, black: after hampel filter")
@@ -152,7 +152,7 @@ def compute_layer_thickness(mask, method, debug=True):
                 return mean_squared_error(y, self.predict(X))
         
         x_vals = np.asarray(list_vertex_rows)
-        y_vals = np.asarray(series_heights_cleaned)
+        y_vals = np.asarray(list_heights_cleaned)
         
         if debug:
             plt.title("input to RANSACRegressor")
