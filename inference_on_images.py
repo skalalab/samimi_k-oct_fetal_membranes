@@ -48,8 +48,8 @@ base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3
 # path_image = base_path / r"2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 
 
-path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D.tiff"
-# path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
+# path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D.tiff"
+path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
 
 # for soft tissue lab 
 # path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_pericervical\2019_02_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D.tiff".replace('\\','/'))
@@ -176,7 +176,7 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         list_inferences_colored.append(label_img_to_rgb(idx))
 # %%
 
-for im in list_inferences[300:311]:
+for im in list_inferences:
 # for im in list_inferences_colored[:10]:
     
     plt.imshow(im)
@@ -397,7 +397,7 @@ df_layer_thickness["total"] = df_layer_thickness["decidua"] + \
                             df_layer_thickness["amnion"]
 
 path_csv_output = path_image.parent / \
-    f"{path_image.stem}_layer_thickness_values.csv"
+    f"{path_image.stem}_thickness.csv"
     
 df_layer_thickness.to_csv(path_csv_output)
 #%%
