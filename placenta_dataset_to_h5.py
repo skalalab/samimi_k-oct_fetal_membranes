@@ -33,7 +33,6 @@ from sklearn.model_selection import KFold
 # Windows on desktop 
 path_segmented_dataset = Path("F:/Emmanuel/0-segmentation_completed")
 
-
 assert path_segmented_dataset.exists() == True, print(f"path_segmented_datset doesn't exists: {path_segmented_dataset.exists()}")
 
 path_h5_output = path_segmented_dataset.parent / "0-h5"
@@ -48,12 +47,12 @@ not_found = 0
 # store paths to images to do the cross validation
 list_path_frame = []
 list_path_rois = []
-
 # path_roi = Path("/home/skalalab/Desktop/test_roi_set.zip")
 # rois = read_roi_zip(path_roi) 
 
 # iterate through each data folder
-for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")): # [0:1] # get first image 
+list_sample_dirs = list(path_segmented_dataset.glob("*_amniochorion_*"))
+for img_folder in list_sample_dirs: # [0:1] # get first image 
 # for img_folder in [list(path_segmented_dataset.glob("*_amniochorion_*"))[-1]]: # get last image
     pass
     
@@ -163,7 +162,11 @@ for im, m_labels, m_weights, p_frame, p_rois in list(zip(list_images, list_label
 kf = KFold(n_splits=10, shuffle=True,  random_state=33)
 
 dict_kfold_indices = {} # dictionary of fold indices based split by cross validation
-for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_frame_set))):
+
+#split fetal membrane samples into test/train
+for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_sample_dirs))):
+# for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_frame_set))):
+
     print("-" * 50)
     print(f"train: {train_indices}")
     print(f"test: {test_indices}")
@@ -173,16 +176,31 @@ for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_fram
         "test": test_indices
         }
 
-# split images according to folds
+# split samples  according to folds
 dict_folds = {} # holds cross validation datasets
+
 ## iterate through 
 for idx, fold in enumerate(dict_kfold_indices.keys()):
     pass
 
-    ## pack training
-    list_train = [list_list_frame_set[idx] for idx in dict_kfold_indices[fold]["train"]]  
-    ## pack testing
-    list_test = [list_list_frame_set[idx] for idx in dict_kfold_indices[fold]["test"]]
+    ## PACK TRAINING
+    list_train_indices =  dict_kfold_indices[fold]["train"]
+    
+    list_train = [] # list to store samples
+    for sample_dir_idx in list_train_indices:
+        pass
+        sample_dir = list_sample_dirs[sample_dir_idx]
+        # compare frame_folder to sample folder
+        list_train += [frame_dict for frame_dict in list_list_frame_set if frame_dict["path_frame"].parent.parent.name == sample_dir.name]
+    
+    ## PACK TESTING
+    list_test_indices = dict_kfold_indices[fold]["test"]
+    list_test = [] # list to store samples
+    for sample_dir_idx in list_test_indices:
+        pass
+        sample_dir = list_sample_dirs[sample_dir_idx]
+        # copy testing only for specific samples
+        list_test += [frame_dict for frame_dict in list_list_frame_set if frame_dict["path_frame"].parent.parent.name == sample_dir.name]
     
     dict_folds[f"{fold}"] = {
         "train_set": list_train,
@@ -373,7 +391,7 @@ for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # [0] export firs
     
     ##%% combine training and testing into the same array for packaging 
     
-    # load test subset of images
+    # load ***TEST*** subset of images
     list_images_test = [test_set["image"] for test_set in dict_folds[fold]["test_set"]]
     list_labels_test = [test_set["m_labels"] for test_set in dict_folds[fold]["test_set"]]
     list_weights_test = [test_set["m_weights"] for test_set in dict_folds[fold]["test_set"]]
@@ -388,11 +406,10 @@ for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # [0] export firs
     # save these for H5_set creation split
     n_training  = len(list_images)  # first n images are for training
     
-    # add testing images at the end
+    # append testing images 
     list_images += list_images_test
     list_labels += list_labels_test 
     list_weights += list_weights_test
-    # n_testing = len(list_images_test)  
 
     
     ## FROM RELAYNET SEGMENTATION
