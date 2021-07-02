@@ -8,3 +8,6 @@ relaynet_pytorch-master/build/*
 relaynet_pytorch-master/relaynet_pytorch.egg-info/*
 relaynet_pytorch-master/.ipynb_checkpoints/*
 .vscode/*
+2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff
+2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D_Pressure.txt
+*.asv

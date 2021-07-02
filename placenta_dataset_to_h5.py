@@ -103,7 +103,7 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")): # [0:1]
         
         # get labels mask    
         mask_labels_encoded = ru.roi_to_labels_mask(path_roi_file,im_rows, im_cols )
-        
+               
         mask_labels = ru.generate_labels_mask_oct(mask_labels_encoded, im_rows, im_cols)
         
         # side NaN's in mask are considered background, label them as 0
@@ -112,6 +112,13 @@ for img_folder in list(path_segmented_dataset.glob("*_amniochorion_*")): # [0:1]
         # offset labels so they start at 1
         mask_labels += 1
         list_labels.append(mask_labels)
+        
+        
+        # check that  labels have correct number of layers
+        assert len(np.unique(mask_labels)) == 6, f"Error: incorrect number of labels in mask {len(np.unique(mask_labels_encoded))} | {path_roi_file} \n likely rois in imagej are not arraged top to bottom layer"
+        # if len(np.unique(mask_labels)) != 6:
+        #     print(f"======> Error: incorrect number of labels in mask {len(np.unique(mask_labels_encoded))} | {path_roi_file}")
+
         
         # plt.imshow(mask_labels)
         # plt.show()
@@ -186,7 +193,7 @@ for idx, fold in enumerate(dict_kfold_indices.keys()):
 # store augmentations for each fold
 dict_fold_augs = {}
 
-for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # export one model
+for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # [0] export first  model
 # for fold_idx, fold in enumerate(dict_folds.keys()):
     print(f"Packaging {fold}:  {fold_idx+1}/{len(dict_folds.keys())}")
     pass
@@ -196,15 +203,24 @@ for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # export one mode
     list_labels = [train_set["m_labels"] for train_set in dict_folds[fold]["train_set"]]
     list_weights = [train_set["m_weights"] for train_set in dict_folds[fold]["train_set"]]
     
+    
+    # list_image_name 
+    list_path_frame = [train_set["path_frame"] for train_set in dict_folds[fold]["train_set"]]
+    
+    ## export small dataset: 
+    # list_images = list_images[:10]
+    # list_labels = list_labels[:10]
+    # list_weights = list_weights[:10]
+    
     # lists that store augmentations
     list_images_aug = []
     list_labels_aug = []
     list_weights_aug = []
     
     # do augmentations 
-    for pos, (image, mask_labels, mask_weights) in enumerate(zip(list_images, list_labels, list_weights)):
+    for pos, (image, mask_labels, mask_weights, path_frame) in enumerate(zip(list_images, list_labels, list_weights, list_path_frame)): # select a subset
         pass
-        print(f"Augmenting image: {pos+1}/{len(list_images)}")
+        print(f"Augmenting image: {pos+1}/{len(list_images)} | {path_frame.name}")
               
         ##### MIRROR DATA
 
@@ -353,34 +369,31 @@ for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # export one mode
         list_images_aug.append(im_rotate_minus_10)
         list_labels_aug.append(labels_rotate_minus_10)
         list_weights_aug.append(weights_rotate_minus_10)
-        
 
     
     ##%% combine training and testing into the same array for packaging 
     
-    # load subset of folds 
+    # load test subset of images
     list_images_test = [test_set["image"] for test_set in dict_folds[fold]["test_set"]]
     list_labels_test = [test_set["m_labels"] for test_set in dict_folds[fold]["test_set"]]
     list_weights_test = [test_set["m_weights"] for test_set in dict_folds[fold]["test_set"]]
     
     
-    ### trim half the augmented set to test memeory allocation
-    ## TODO undo this!
-    # split_index = int(len(list_images_aug)/6)
-    # list_images_aug = list_images_aug[:split_index]
-    # list_labels_aug = list_labels_aug[:split_index]
-    # list_weights_aug = list_weights_aug[:split_index]
-
-    # save these for H5_set creation
-    n_training  = len(list_images) 
-    n_testing = len(list_images_test)    
 
     # add augmetnations to training set
-    # TODO re-include augmented
-    list_images += list_images_test# + list_images_aug #
-    list_labels +=  list_labels_test# + list_labels_aug
-    list_weights +=  list_weights_test# + list_weights_aug
+    list_images += list_images_aug 
+    list_labels +=  list_labels_aug
+    list_weights +=  list_weights_aug
     
+    # save these for H5_set creation split
+    n_training  = len(list_images)  # first n images are for training
+    
+    # add testing images at the end
+    list_images += list_images_test
+    list_labels += list_labels_test 
+    list_weights += list_weights_test
+    # n_testing = len(list_images_test)  
+
     
     ## FROM RELAYNET SEGMENTATION
     #  entries 1 or 3 indicating which data is for training and validation respectively.
@@ -478,7 +491,7 @@ for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # export one mode
         h5_labels[idx, dim_class, :, :] = labels # pad to size of img_rows, img_cols
         h5_labels[idx,dim_weights, :, :] = weights  # pad to size of img_rows, img_cols
         
-    
+#%%
     #EXPORT DATASETS
     print("saving datasets to h5")
     # make folder to store fold

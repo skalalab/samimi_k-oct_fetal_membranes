@@ -33,7 +33,7 @@ mpl.rcParams['figure.dpi'] = 300
 # path_images = path_images / "images"
 
 # images in completed
-# base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # path_image = base_path / ""
 
@@ -47,9 +47,11 @@ mpl.rcParams['figure.dpi'] = 300
 
 # path_image = base_path / r"2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
 
-
+# completed 
 # path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D.tiff"
-path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
+# path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
+path_image = base_path / "2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
+
 
 # for soft tissue lab 
 # path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_pericervical\2019_02_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D.tiff".replace('\\','/'))
@@ -153,7 +155,10 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         # path_model = Path("/home/skalalab/Desktop/relaynet_model_w_augs.model")
         # path_model = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/trained_models")
         # path_model = path_model / "relaynet_model_w_augs_10_21_2020.model"
-        path_model = Path(r"C:\Users\OCT\Desktop\development\relaynet_pytorch\models\relaynet_model_fold_0.model".replace('\\','/'))
+        
+        # newer models 
+        # path_model = Path(r"C:\Users\OCT\Desktop\development\relaynet_pytorch\models\relaynet_model_fold_0.model".replace('\\','/'))
+        path_model = Path(r"F:\Emmanuel\0-h5\full_folds\fold_9\relaynet_model_fold_9.model".replace("\\",'/'))
 
 
         relaynet_model = torch.load(str(path_model))
@@ -176,8 +181,8 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         list_inferences_colored.append(label_img_to_rgb(idx))
 # %%
 
-for im in list_inferences:
-# for im in list_inferences_colored[:10]:
+# for im in list_inferences:
+for im in list_inferences_colored[:10]:
     
     plt.imshow(im)
     plt.show()
@@ -306,7 +311,7 @@ for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences[:30
         list_data_edges.append(mask_edges)
                
 
-# %%## 
+# %%## EXPORT TIFF: SAVE RUN THIS AFTER LAYER EDGE DETECTION
 
 # combine all edges into a single mask 
 edge_masks = []
@@ -318,11 +323,11 @@ for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer
 # make tiffs of original, colored overlayed predictions and edges
 # tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
 print("saving tiff overlayed output")
-out_path = str(path_image.parent / f"{path_image.stem}_with_overlays.tiff")
+out_path = str(path_image.parent / f"{path_image.stem}_all.tiff")
 
 # out_path = str( f"/home/skalalab/Desktop/{path_image.stem}_combined_edges.tiff")
 with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
-    for pos, (image, labels, edges) in enumerate(zip(list_images[:308], list_inferences_colored, edge_masks)):
+    for pos, (image, labels, edges) in enumerate(zip(list_images, list_inferences_colored, edge_masks)):
         pass
         # tiff_stack[pos,...] = labels.transpose().astype(int)
         print(f"saving image {pos+1}/{len(list_images)}")
@@ -398,6 +403,7 @@ df_layer_thickness["total"] = df_layer_thickness["decidua"] + \
 
 path_csv_output = path_image.parent / \
     f"{path_image.stem}_thickness.csv"
-    
+
+print(f"layer thickness output path: {path_csv_output}")
 df_layer_thickness.to_csv(path_csv_output)
 #%%
