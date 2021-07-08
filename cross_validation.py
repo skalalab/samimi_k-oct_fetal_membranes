@@ -166,6 +166,7 @@ dict_layers = {
 
 dict_metrics = {}
 
+# iterate through frames
 for img_num in np.arange(len(test_data)):
     pass
     print(f"processing image {img_num+1}/{len(test_data)} ")
@@ -200,12 +201,11 @@ for img_num in np.arange(len(test_data)):
         # plt.imshow(img_test)
         # plt.show()
         
-        # layers 
+        # remove background layers at start/end
         list_layers = np.unique(idx)[1:-1]
         
 
-       
-        # compare masks
+        # iterate through layers and compare with gt mask
         for layer_num in list_layers:
             pass
 
@@ -246,17 +246,20 @@ for ind in df.index:
         list_total_error.append(df[sample_num][ind]["total_error"])
     
     
-    fig, ax = plt.subplots(1,3, figsize=(20,8))
+    fig, ax = plt.subplots(1,2, figsize=(20,6))
     fig.suptitle(f"{ind}")
     
-    ax[0].set_title(f"dice \n mean: {np.mean(list_dice):3f} \n stdev: {np.std(list_dice):3f}")
+    ax[0].set_title(f"dice \n mean: {np.mean(list_dice):.3f}  stdev: {np.std(list_dice):.3f}")
     ax[0].plot(list_dice)
-    
-    ax[1].set_title(f"jaccard \n mean: {np.mean(list_jaccard):3f} \n stdev: {np.std(list_jaccard):3f}")
-    ax[1].plot(list_jaccard)
+    ax[0].set_xlabel("Sample index ")
+    ax[0].set_ylabel("Dice Score")
+    # ax[1].set_title(f"jaccard \n mean: {np.mean(list_jaccard):.3f}  stdev: {np.std(list_jaccard):.3f}")
+    # ax[1].plot(list_jaccard)
 
-    ax[2].set_title(f"total_error \n mean: {np.mean(list_total_error):3f} \n stdev: {np.std(list_total_error):3f}")
-    ax[2].plot(list_total_error)
+    ax[1].set_title(f"total_error \n mean: {np.mean(list_total_error):.3f}  stdev: {np.std(list_total_error):.3f}")
+    ax[1].plot(list_total_error)
+    ax[1].set_xlabel("Sample index ")
+    ax[1].set_ylabel("total error (% misclassified pixels)")
     
 
 

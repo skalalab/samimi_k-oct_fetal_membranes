@@ -168,6 +168,7 @@ for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_sample_di
 # for idx, (train_indices, test_indices) in enumerate(list(kf.split(list_list_frame_set))):
 
     print("-" * 50)
+    print(f"fold: {idx}")
     print(f"train: {train_indices}")
     print(f"test: {test_indices}")
     print("-" * 50)
@@ -211,7 +212,7 @@ for idx, fold in enumerate(dict_kfold_indices.keys()):
 # store augmentations for each fold
 dict_fold_augs = {}
 
-for fold_idx, fold in enumerate([list(dict_folds.keys())[0]]): # [0] export first  model
+for fold_idx, fold in enumerate([list(dict_folds.keys())[2]]): # [0] export first  model
 # for fold_idx, fold in enumerate(dict_folds.keys()):
     print(f"Packaging {fold}:  {fold_idx+1}/{len(dict_folds.keys())}")
     pass
