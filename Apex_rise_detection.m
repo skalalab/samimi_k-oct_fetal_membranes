@@ -52,6 +52,7 @@ figure(1);
 [I1, rect] = imcrop(f);
 rect = round(rect);
 
+clear apex_rise;
 apex_rise(1)=0;
 %%
 warning('off');

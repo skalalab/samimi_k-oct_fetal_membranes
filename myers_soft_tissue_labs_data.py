@@ -18,8 +18,10 @@ HERE = Path(__file__).resolve().parent
 path_output = Path("C:/Users/Nabiki/Desktop/soft_tissue_lab")
 
 ####
-list_sample1 = Path(r"Z:\Kayvan\Human Data\2018_12_12_term_labor_SROM_39w5d".replace("\\","/"))
-list_path_samples = [list_sample1]
+# list_sample = Path(r"Z:\Kayvan\Human Data\2018_12_12_term_labor_SROM_39w5d".replace("\\","/"))
+list_sample = Path(r"Z:\Kayvan\Human Data\2018_11_06_term_labor_SROM_40w0d".replace("\\","/"))
+
+list_path_samples = [list_sample]
 
 ####
 
