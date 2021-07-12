@@ -1,5 +1,5 @@
 [fname, path] = uigetfile('*.txt', 'Load PRESSURE text file.');
-P = importdata(fname,';',0);
+P = importdata(cat(2,path,fname),';',0);
 press = P.data;
 % pressure_interp = transpose(interp1 (1:size(press), press, linspace(1, size(press,1), size(apex_rise_metric,1))));
 
@@ -29,7 +29,7 @@ for i=2:size(x_ind,1)
     end
     %if odd index, skip
 end
-
+scrsz = get(0,'ScreenSize');
 figure, plot(apex_rise_metric_cropped)
 figure, plot(pressure_interp_cropped)
 fig = figure('Position',[round(0.1*scrsz(3)) round(0.1*scrsz(4)) round(0.8*scrsz(3)) round(0.8*scrsz(4))]);     % Monitor 1
