@@ -66,7 +66,7 @@ def compute_layer_thickness(mask, method, debug=True):
         plt.show()
         
     ############ remove small blobs (anything 10% or smaller)
-    label_image = label(mask)
+    label_image, num_labels = label(mask, return_num=True)
     label_region_props = regionprops(label_image)
     for pos, region in enumerate(label_region_props):
         # print(f"pos: {pos} area: {region.area}")
@@ -75,8 +75,11 @@ def compute_layer_thickness(mask, method, debug=True):
         elif region.area > largest_region.area:
             largest_region = region
     
-    if len(np.unique(label_image)) >= 2: # if num labels == 2 you have bg and one connected component
+    # remove 
+    layer_mask = label_image # this is done to supress warning about removing blobs on binary mask
+    if num_labels > 2: # if num labels == 2 you only have bg and one connected component
         layer_mask = remove_small_objects(label_image, min_size=(largest_region.area*0.1))  # remove spots < 10% largest region found
+    
     layer_mask[layer_mask > 0] = 1 # make mask binary of area will be off
     
     if debug:

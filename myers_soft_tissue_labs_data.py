@@ -15,11 +15,14 @@ HERE = Path(__file__).resolve().parent
 # list_path_samples = list(path_data.glob("*[0-9]d*"))
 
 # path_output = HERE / "data_for_soft_tissue_lab"
-path_output = Path("C:/Users/Nabiki/Desktop/soft_tissue_lab")
+# path_output = Path("C:/Users/Nabiki/Desktop/soft_tissue_lab")
+path_output = Path("F:/Emmanuel/pressure_data")
+
+
 
 ####
 # list_sample = Path(r"Z:\Kayvan\Human Data\2018_12_12_term_labor_SROM_39w5d".replace("\\","/"))
-list_sample = Path(r"Z:\Kayvan\Human Data\2018_11_06_term_labor_SROM_40w0d".replace("\\","/"))
+list_sample = Path(r"Z:\Kayvan\Human Data\2018_10_09_term_labor_AROM_39w5d".replace("\\","/"))
 
 list_path_samples = [list_sample]
 

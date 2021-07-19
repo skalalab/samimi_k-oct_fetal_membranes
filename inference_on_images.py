@@ -279,7 +279,7 @@ for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), s
         list_data_edges.append(mask_edges)
                
 print("finished calculating layer thickness")
-##%% EXPORT TIFF: SAVE - RUN THIS AFTER calculating layer thickness
+#%% EXPORT TIFF: SAVE - RUN THIS AFTER calculating layer thickness
 
 # combine all edges into a single mask 
 edge_masks = []
@@ -344,7 +344,7 @@ with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
 print(f"finished saving combined image: {out_path}\n")
 print(f"NOTE: Remember to load the images in imagej as HYPERSTACKS")
 
-##%% # plot layer thicknesses
+#%% # plot layer thicknesses
 for thickness_data in dict_lists_layer_thickness:
     plt.plot(dict_lists_layer_thickness[thickness_data])
     # plots.append(plt.plot(thickness_data))
@@ -360,7 +360,7 @@ print(f"figure saved in: {str(path_fig_output)}")
 plt.savefig(str(path_fig_output))
 plt.show()
 
-##%% save thickness as csv
+#%% save thickness as csv
 
 
 df_layer_thickness = pd.DataFrame(dict_lists_layer_thickness) # columns=["decidua","chorion", "spongy", "amnion"]
