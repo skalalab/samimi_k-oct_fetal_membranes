@@ -16,57 +16,31 @@ from skimage import morphology
 
 from skimage.measure import label, regionprops
 import os
-from layer_edge_fitting_code import compute_layer_thickness
 import pandas as pd
 
 
 # set cwd to relaynet directory
-# os.chdir("/home/skalalab/Desktop/development/relaynet_pytorch")
+os.chdir("C:/Users/OCT/Desktop/development/fetal_membrane_kayvan")
+from layer_edge_fitting_code import compute_layer_thickness
 
-# in spyder change figures to show higher, otherwise it shows gaps in layers
+
+
 mpl.rcParams['figure.dpi'] = 300
+#%%
 
-# path_images = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256")
-# # path_images = path_images / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D"
-# # path_images = path_images / "2018_10_11_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D"
-# path_images = path_images / "2018_12_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D"
-# path_images = path_images / "images"
-
-# images in completed
-base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
-# base_path = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
-# path_image = base_path / ""
-
-# path_image = base_path / "2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
-# path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
-# path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D.tiff"
-# path_image = base_path / "2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
-# path_image = base_path / "2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D/2018_11_07_human_amniochorion_labored_postterm_SROM_pericervical_0002_Mode2D.tiff"
-# path_image = base_path / "2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_25_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff"
-# path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0002_Mode2D.tiff"
-
-# path_image = base_path / r"2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D/2019_03_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff"
-
-# completed 
-# path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D.tiff"
-# path_image = base_path / "2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_12_12_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
-path_image = base_path / "2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
+# # images in completed
+# base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+# path_image = base_path / "2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
 
 
-# for soft tissue lab 
-# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_pericervical\2019_02_06_human_amniochorion_labored_term_AROM_pericervical_0003_Mode2D.tiff".replace('\\','/'))
-# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_periplacental\2019_02_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff".replace('\\','/'))
-# path_image = base_path / "2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D/2018_10_10_human_amniochorion_labored_postterm_AROM_pericervical_0004_Mode2D.tiff"
-# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2020_12_18_C_section_39w0d\Inflation\2020_12_18_C_section_39w0d_pericervical_amniochorion\2020_12_18_C_section_39w0d_pericervical_amniochorion_0001_Mode2D.tiff".replace("\\","/")) 
-# path_image = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\ms\2019_02_06_term_labor_AROM_37w5d\Inflation\2019_02_06_human_amniochorion_labored_term_AROM_periplacental\2019_02_06_human_amniochorion_labored_term_AROM_periplacental_0002_Mode2D.tiff".replace("\\","/"))
+base_path = Path("F:/Emmanuel/0-segmentation_completed")
+list_im_paths = list(base_path.glob("*"))
+list_im_paths = [p for p in list_im_paths if p.is_dir()]
 
+#
+path_image_dir = list_im_paths[0]
+path_image = list(path_image_dir.glob("*.tiff"))[0]
 
-# images not yet segmented
-# path_image = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0004_Mode2D.tiff")
-# path_image = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0004_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_periplacental_0004_Mode2D.tiff")
-#path_image = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/2018_10_11_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D/2018_10_11_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D.tiff")
-# path_image = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0003_Mode2D/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0003_Mode2D.tiff")
-# path_image = PureWindowsPath("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D/2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D.tiff")
 
 list_images = []
 list_inferences = []
@@ -82,6 +56,8 @@ if len(im_set.shape) == 4:
     im_set = im_set[..., 0]  # keep only 1 channel
 
 # %% inferences
+
+os.chdir("C:/Users/OCT/Desktop/development/relaynet_pytorch")
 
 # Taken from relaynet original repo to colro images
 SEG_LABELS_LIST = [
@@ -149,16 +125,8 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         # shape input matrix
         image[0, 0, ...] = im
 
-        # path_model = Path("Z:/0-Projects and Experiments/KS - OCT membranes/trained_models/relaynet_model.model")
-        # path_model = Path(
-            # "Z:/0-Projects and Experiments/KS - OCT membranes/trained_models/relaynet_model_w_augs.model")
-        # path_model = Path("/home/skalalab/Desktop/relaynet_model_w_augs.model")
-        # path_model = Path("/run/user/1000/gvfs/smb-share:server=skala-dv1.discovery.wisc.edu,share=ws/skala/0-Projects and Experiments/KS - OCT membranes/trained_models")
-        # path_model = path_model / "relaynet_model_w_augs_10_21_2020.model"
         
-        # newer models 
-        # path_model = Path(r"C:\Users\OCT\Desktop\development\relaynet_pytorch\models\relaynet_model_fold_0.model".replace('\\','/'))
-        path_model = Path(r"F:\Emmanuel\0-h5\full_folds\fold_9\relaynet_model_fold_9.model".replace("\\",'/'))
+        path_model = Path(r"F:\Emmanuel\0-h5\fold_0\relaynet_model_fold_0.model".replace("\\",'/'))
 
 
         relaynet_model = torch.load(str(path_model))
@@ -228,10 +196,10 @@ for im in list_inferences_colored[:10]:
 #         tif.save(stack.astype(np.float32))
 # print(f"finished saving combined image: {out_path}")
 
-# %%
-# calculate layer thickness from labels mask
-# generate plots from calculations
+#%% # calculate layer thickness from labels mask
 
+import warnings
+warnings.simplefilter('ignore', np.RankWarning)
 
 #store thicknesses per frame for each layer in this dictionary
 dict_lists_layer_thickness = {
@@ -247,8 +215,8 @@ edges_spongy = []
 edges_amnion = []
 list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
-
-for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences[:308]), start=1): # list_images[:10]
+#TODO change range
+for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1): # list_images[:10]
     print(
         f"calculating layer thickness for image: {frame_num}/{len(list_images)}")
     pass
@@ -310,8 +278,8 @@ for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences[:30
         # plt.show()
         list_data_edges.append(mask_edges)
                
-
-# %%## EXPORT TIFF: SAVE RUN THIS AFTER LAYER EDGE DETECTION
+print("finished calculating layer thickness")
+##%% EXPORT TIFF: SAVE - RUN THIS AFTER calculating layer thickness
 
 # combine all edges into a single mask 
 edge_masks = []
@@ -323,7 +291,10 @@ for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer
 # make tiffs of original, colored overlayed predictions and edges
 # tiff_stack = np.empty((len(list_inferences), *idx.transpose().shape))
 print("saving tiff overlayed output")
-out_path = str(path_image.parent / f"{path_image.stem}_all.tiff")
+
+output_dir_path = path_image.parent / "thickness"
+output_dir_path.mkdir(exist_ok=True)
+out_path = str(output_dir_path /  f"{path_image.stem}_all.tiff")
 
 # out_path = str( f"/home/skalalab/Desktop/{path_image.stem}_combined_edges.tiff")
 with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
@@ -373,8 +344,7 @@ with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
 print(f"finished saving combined image: {out_path}\n")
 print(f"NOTE: Remember to load the images in imagej as HYPERSTACKS")
 
-# %%
-# plot layer thicknesses
+##%% # plot layer thicknesses
 for thickness_data in dict_lists_layer_thickness:
     plt.plot(dict_lists_layer_thickness[thickness_data])
     # plots.append(plt.plot(thickness_data))
@@ -382,14 +352,15 @@ for thickness_data in dict_lists_layer_thickness:
 plt.xlabel("frame(_/sec)")
 plt.ylabel("thickness (pixels)")
 plt.title(f"{path_image.stem}")
-plt.legend(list(dict_lists_layer_thickness.keys()))
-path_fig_output = path_image.parent / \
+plt.legend(list(dict_lists_layer_thickness.keys()), loc='center left', bbox_to_anchor=(1, 0.5))
+plt.tight_layout()
+path_fig_output = output_dir_path / \
     f"{path_image.stem}_thickness.jpeg"
 print(f"figure saved in: {str(path_fig_output)}")
 plt.savefig(str(path_fig_output))
 plt.show()
 
-#%% save thickness as csv
+##%% save thickness as csv
 
 
 df_layer_thickness = pd.DataFrame(dict_lists_layer_thickness) # columns=["decidua","chorion", "spongy", "amnion"]
@@ -401,7 +372,7 @@ df_layer_thickness["total"] = df_layer_thickness["decidua"] + \
                             df_layer_thickness["spongy"] + \
                             df_layer_thickness["amnion"]
 
-path_csv_output = path_image.parent / \
+path_csv_output = output_dir_path / \
     f"{path_image.stem}_thickness.csv"
 
 print(f"layer thickness output path: {path_csv_output}")

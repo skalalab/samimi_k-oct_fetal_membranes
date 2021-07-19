@@ -212,7 +212,7 @@ for idx, fold in enumerate(dict_kfold_indices.keys()):
 # store augmentations for each fold
 dict_fold_augs = {}
 
-for fold_idx, fold in enumerate([list(dict_folds.keys())[2]]): # [0] export first  model
+for fold_idx, fold in enumerate(list(dict_folds.keys())[3:]): # [0] export first  model
 # for fold_idx, fold in enumerate(dict_folds.keys()):
     print(f"Packaging {fold}:  {fold_idx+1}/{len(dict_folds.keys())}")
     pass
@@ -509,7 +509,7 @@ for fold_idx, fold in enumerate([list(dict_folds.keys())[2]]): # [0] export firs
         h5_labels[idx, dim_class, :, :] = labels # pad to size of img_rows, img_cols
         h5_labels[idx,dim_weights, :, :] = weights  # pad to size of img_rows, img_cols
         
-#%%
+##%%
     #EXPORT DATASETS
     print("saving datasets to h5")
     # make folder to store fold

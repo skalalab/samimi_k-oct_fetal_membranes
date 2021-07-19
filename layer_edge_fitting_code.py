@@ -74,8 +74,10 @@ def compute_layer_thickness(mask, method, debug=True):
             largest_region = region  # initialize largest region
         elif region.area > largest_region.area:
             largest_region = region
-    layer_mask = remove_small_objects(label_image, min_size=(largest_region.area*0.1))  # remove spots < 10% largest region found
-    layer_mask[layer_mask > 0] = 1 # make mast binary of area will be off
+    
+    if len(np.unique(label_image)) >= 2: # if num labels == 2 you have bg and one connected component
+        layer_mask = remove_small_objects(label_image, min_size=(largest_region.area*0.1))  # remove spots < 10% largest region found
+    layer_mask[layer_mask > 0] = 1 # make mask binary of area will be off
     
     if debug:
         plt.title("after removing small blobs")
@@ -191,7 +193,7 @@ def compute_layer_thickness(mask, method, debug=True):
     
     # METHOD 1 - CALCULATE MIDDLE LINE
     if method == 1:
-        print("method 1 selected")
+        #print("method 1 selected")
         poly_top_edge = np.poly1d(list_coeffs[0][0])
         poly_bottom_edge = np.poly1d(list_coeffs[1][0])
     
@@ -236,7 +238,7 @@ def compute_layer_thickness(mask, method, debug=True):
         return thickness, [coeffs_middle_poly]
     
     if method == 2: 
-        print("method 2 selected")
+        #print("method 2 selected")
         # METHOD 2 - CALCULATE TOP AND BOTTOM EDGES AND AVERAGE DISTANCE
        
         list_layer_lengths = [] 
