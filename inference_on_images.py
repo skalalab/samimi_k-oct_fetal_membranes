@@ -332,7 +332,7 @@ with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
 
         # stack images
         # crop edges to original image size (265,3000)
-        stack = np.vstack((image, overlayed_im_mask, overlayed_edges)) # why this 247 again?
+        stack = np.vstack((image, overlayed_im_mask, overlayed_edges))
         # stack = np.vstack((image, overlayed_im_mask))
 
         # add frame number to output image
@@ -376,5 +376,5 @@ path_csv_output = output_dir_path / \
     f"{path_image.stem}_thickness.csv"
 
 print(f"layer thickness output path: {path_csv_output}")
-df_layer_thickness.to_csv(path_csv_output)
+df_layer_thickness.to_csv(path_csv_output, index=False) # don't save row index
 #%%
