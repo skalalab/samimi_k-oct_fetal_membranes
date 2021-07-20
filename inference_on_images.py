@@ -17,7 +17,7 @@ from skimage import morphology
 from skimage.measure import label, regionprops
 import os
 import pandas as pd
-
+import csv
 
 # set cwd to relaynet directory
 os.chdir("C:/Users/OCT/Desktop/development/fetal_membrane_kayvan")
@@ -29,17 +29,22 @@ mpl.rcParams['figure.dpi'] = 300
 #%%
 
 # # images in completed
-# base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
 # path_image = base_path / "2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
 
 
-base_path = Path("F:/Emmanuel/0-segmentation_completed")
+# base_path = Path("F:/Emmanuel/0-segmentation_completed")
 list_im_paths = list(base_path.glob("*"))
 list_im_paths = [p for p in list_im_paths if p.is_dir()]
 
-#
-path_image_dir = list_im_paths[0]
+# # load list of processed samples
+# path_processed_file = base_path / "processed.csv"
+# list_processed_samples = csv.load(path_processed_file)
+
+path_image_dir = list_im_paths[1] # image number completed: [0]
 path_image = list(path_image_dir.glob("*.tiff"))[0]
+
+# images processed = [0]
 
 
 list_images = []
@@ -215,10 +220,10 @@ edges_spongy = []
 edges_amnion = []
 list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
-#TODO change range
+#TODO 
 for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1): # list_images[:10]
     print(
-        f"calculating layer thickness for image: {frame_num}/{len(list_images)}")
+        f"calculating layer thickness for frame: {frame_num}/{len(list_images)}")
     pass
 
 
@@ -383,22 +388,50 @@ from pathlib import Path
 import pandas as pd
 
 
-path_sample = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed\2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D".replace("\\",'/'))
-
+path_sample = Path(r"F:\Emmanuel\0-segmentation_completed\2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D".replace("\\",'/'))
 
 # load matlab export csv
 path_matlab_csv = list(path_sample.glob("*_Pressure_Apex.csv"))[0]
 pd_frame_apex_rise_pressure = pd.read_csv(path_matlab_csv, names=["Apex Rise", "Pressure"])
 
 # load python thickness
-path_python_csv = Path(r"Z:\0NDL8U~X\K5VHRD~Q\O7TBB9~W\0V1FKE~0\23OQ4F~N\TJ88EI~L\2AHKSN~O.CSV".replace("\\", '/'))
-pd_frame_thickness = pd.read_csv(path_python_csv)
+path_frame_vs_thickness = path_sample / "thickness"
+path_frame_vs_thickness_csv = list(path_frame_vs_thickness.glob("*.csv"))[0]
+pd_frame_thickness = pd.read_csv(path_frame_vs_thickness_csv)
 
 # merge dataframes
 merged_df = pd.concat([pd_frame_apex_rise_pressure, pd_frame_thickness], axis=1)
 
 path_feats = path_sample / f"{path_sample.name}_feats.csv"
-merged_df.to_csv(path_sample / f"{path_sample.name}_feats.csv")
+merged_df.to_csv(path_sample / f"{path_sample.name}_feats.csv", na_rep="NA")
 
 
+#%% Copy over pressure files to hand segmented samples
 
+import re
+import shutil
+
+#get list of all samples
+path_segmented = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed".replace("\\",'/'))
+list_path_dir_segmented_samples = list(path_segmented.glob("*"))
+
+
+#get list of pressure files - do this once here
+path_pressure = Path("Z:/Kayvan/Human Data")
+list_pressure_files = list(path_pressure.rglob("*_Pressure*.txt"))
+list_pressure_files_str = [str(p) for p in list_pressure_files]
+
+
+for pos, path_dir_sample in enumerate(list_path_dir_segmented_samples):
+    pass
+    sample_name = path_dir_sample.name
+
+    # find corresponding pressure file that matches sample
+    path_pressure_file = list(filter(re.compile(f"{sample_name}").search, list_pressure_files_str))[0]
+    path_pressure_file = Path(path_pressure_file)
+    print(f"{pos}: {path_pressure_file.name}")
+    
+    # commment in to copy files
+    #shutil.copy2(path_pressure_file, path_dir_sample / path_pressure_file.name)
+    
+    
