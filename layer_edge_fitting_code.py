@@ -290,14 +290,15 @@ def compute_layer_thickness(mask, method, debug=True):
     
         #calculate mean and finally plot lines
         mean_length = np.mean(list_layer_lengths)
-        thickness = np.sum(mask)/mean_length
+        area = np.sum(mask)
+        thickness = area/mean_length
         
         if debug:
             plt.title(f"method 2 avg top and bottom \n top layer: {list_layer_lengths[0]:.4f} bottom layer: {list_layer_lengths[1]:.4f} mean: {mean_length:.4f} \n thickness: {thickness:.4f} ")
             plt.show()
     
         # return thickness and coeffs of polynomials 
-        return thickness, [list_coeffs[0][0], list_coeffs[1][0]] , list_points_edges
+        return thickness, mean_length, area, [list_coeffs[0][0], list_coeffs[1][0]] , list_points_edges
 
 #%%
 
