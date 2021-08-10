@@ -22,6 +22,7 @@ import csv
 # set cwd to relaynet directory
 os.chdir("C:/Users/OCT/Desktop/development/fetal_membrane_kayvan")
 from layer_edge_fitting_code import compute_layer_thickness
+from time import time
 
 
 
@@ -29,21 +30,27 @@ mpl.rcParams['figure.dpi'] = 300
 #%%
 
 # # images in completed
-base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+# base_path = Path("Z:/0-Projects and Experiments/KS - OCT membranes/oct_dataset_3100x256/0-segmentation_completed")
+base_path = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed".replace("\\",'/'))
 # path_image = base_path / "2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D/2018_11_06_human_amniochorion_labored_term_SROM_periplacental_0002_Mode2D.tiff"
 
 
 # base_path = Path("F:/Emmanuel/0-segmentation_completed")
-list_im_paths = list(base_path.glob("*"))
-list_im_paths = [p for p in list_im_paths if p.is_dir()]
+# list_im_paths = list(base_path.glob("*"))
+# list_im_paths = [p for p in list_im_paths if p.is_dir()]
 
 # # load list of processed samples
 # path_processed_file = base_path / "processed.csv"
 # list_processed_samples = csv.load(path_processed_file)
 
-path_image_dir = list_im_paths[1] # image number completed: [0]
-path_image = list(path_image_dir.glob("*.tiff"))[0]
+# path_image_dir = list_im_paths[1] # image number completed: [0]
 
+# C section samples starting 
+# 2020_07_16_C_section_38w6d
+
+sample_name = "2018_10_11_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D"
+path_sample_dir = base_path / sample_name
+path_image = path_sample_dir / f"{sample_name}.tiff"
 # images processed = [0]
 
 
@@ -53,7 +60,8 @@ list_inferences_colored = []
 
 # LOAD IMAGE AND EXTRACT CHANNEL IF NEEDED
 print("reading tiff")
-im_set = tifffile.imread(str(path_image))
+path_im = str(path_image)
+im_set = tifffile.imread(path_im)
 print("finished reading tiff")
 
 # account for 3 channel images, take first
@@ -152,6 +160,7 @@ with torch.no_grad():  # this frees up memory in between runs!!!!
         list_inferences.append(idx)
 
         list_inferences_colored.append(label_img_to_rgb(idx))
+print("finished inference code")
 # %%
 
 # for im in list_inferences:
@@ -207,12 +216,29 @@ import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 #store thicknesses per frame for each layer in this dictionary
-dict_lists_layer_thickness = {
-    "decidua": [], # layer 1
-    "chorion": [], # layer 2
-    "spongy": [], # layer 3
-    "amnion": []  # layer 4
+dict_layer_props = {
+    "decidua": {# layer 1
+        "thickness": [],
+        "area": [],
+        "length":[]
+        },
+    "chorion": {# layer 2
+        "thickness": [],
+        "area": [],
+        "length":[]
+        },
+    "spongy": { # layer 3
+        "thickness": [],
+        "area": [],
+        "length":[]
+        },
+    "amnion": { # layer 4
+        "thickness": [],
+        "area": [],
+        "length":[]
+        }
 }
+
 
 edges_decidua = []
 edges_chorion = []
@@ -221,16 +247,16 @@ edges_amnion = []
 list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
 #TODO 
-for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1): # list_images[:10]
+start = time() 
+for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1):
     print(
         f"calculating layer thickness for frame: {frame_num}/{len(list_images)}")
     pass
 
-
     # iterate through each layer
     # calculate layer thickness
     # exclude top and bottom layers of placenta
-    for layer_num, dict_layer_key, list_data_edges in zip((np.unique(labels)[1:-1]), dict_lists_layer_thickness, list_layer_edges):
+    for layer_num, dict_layer_key, list_data_edges in zip((np.unique(labels)[1:-1]), dict_layer_props, list_layer_edges):
         pass
         # convert layer to ints
         layer_mask = (labels == layer_num).astype(int)
@@ -262,11 +288,12 @@ for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), s
             plt.show()
 
         ### start function for thickness calculation
-        layer_thickness, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, debug=debug)
+        layer_thickness, mean_layer_length, layer_area, list_poly_coeffs, list_mask_pixels = compute_layer_thickness(layer_mask, method=2, debug=debug)
 
-    
-        dict_lists_layer_thickness[dict_layer_key].append(layer_thickness)
-        # list_data_layers.append(layer_thickness)
+        # save props for each layer
+        dict_layer_props[dict_layer_key]["length"].append(mean_layer_length)
+        dict_layer_props[dict_layer_key]["area"].append(layer_area)
+        dict_layer_props[dict_layer_key]["thickness"].append(layer_thickness)
 
         #save binary mask of edges to displaylater
         
@@ -282,14 +309,16 @@ for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), s
         # plt.imshow(mask_edges, vmin=0, vmax=1)
         # plt.show()
         list_data_edges.append(mask_edges)
-               
-print("finished calculating layer thickness")
+        
+end = time()
+difference = (end-start)/(60*60)
+print(f"finished calculating layer thickness - elapsed time: {difference:.2f} hours")
 #%% EXPORT TIFF: SAVE - RUN THIS AFTER calculating layer thickness
 
 # combine all edges into a single mask 
 edge_masks = []
 for pos, (e_decidua, e_chorion, e_spongy, e_amnion) in enumerate(zip(*list_layer_edges)):
-    combined_mask = e_decidua + e_chorion + e_spongy + e_amnion
+    combined_mask = e_decidua + e_chorion + e_spongy + e_amnion # combine layers into ne mask
     edge_masks.append(combined_mask)
 
 # save labeled mask
@@ -303,10 +332,10 @@ out_path = str(output_dir_path /  f"{path_image.stem}_all.tiff")
 
 # out_path = str( f"/home/skalalab/Desktop/{path_image.stem}_combined_edges.tiff")
 with tifffile.TiffWriter(out_path, bigtiff=True) as tif:  # imagej=True
-    for pos, (image, labels, edges) in enumerate(zip(list_images, list_inferences_colored, edge_masks)):
+    for pos, (image, labels, edges) in enumerate(zip(list_images, list_inferences_colored, edge_masks), start=1):
         pass
         # tiff_stack[pos,...] = labels.transpose().astype(int)
-        print(f"saving image {pos+1}/{len(list_images)}")
+        print(f"saving image {pos}/{len(list_images)}")
 
         # norm_image = (image/np.max(image))[:,50:-50] # match dimensions of labels mask
         #norm_labels = (labels.transpose()/np.max(labels)).astype(np.float32)
@@ -350,86 +379,119 @@ print(f"finished saving combined image: {out_path}\n")
 print(f"NOTE: Remember to load the images in imagej as HYPERSTACKS")
 
 #%% # plot layer thicknesses
-for thickness_data in dict_lists_layer_thickness:
-    plt.plot(dict_lists_layer_thickness[thickness_data])
+for layer in dict_layer_props:
+    pass
+    # x_axis = np.arange(len(dict_layer_props[layer]["thickness"]),) + 1
+    plt.plot(dict_layer_props[layer]["thickness"])
     # plots.append(plt.plot(thickness_data))
 
-plt.xlabel("frame(_/sec)")
+plt.xlabel("frame number")
 plt.ylabel("thickness (pixels)")
 plt.title(f"{path_image.stem}")
-plt.legend(list(dict_lists_layer_thickness.keys()), loc='center left', bbox_to_anchor=(1, 0.5))
+plt.legend(list(dict_layer_props.keys()), loc='center left', bbox_to_anchor=(1, 0.5))
 plt.tight_layout()
 path_fig_output = output_dir_path / \
     f"{path_image.stem}_thickness.jpeg"
 print(f"figure saved in: {str(path_fig_output)}")
-plt.savefig(str(path_fig_output))
+plt.savefig(str(path_fig_output), bbox_inches="tight")
 plt.show()
 
 #%% save thickness as csv
 
-
-df_layer_thickness = pd.DataFrame(dict_lists_layer_thickness) # columns=["decidua","chorion", "spongy", "amnion"]
+# 2d Dict to DF
+df_props = pd.DataFrame()
+for layer_name in dict_layer_props:
+    for prop in dict_layer_props[layer_name]:
+        df_props[f"{layer_name}-{prop}"] = dict_layer_props[layer_name][prop]
+        
+# df_layer_thickness = pd.DataFrame(dict_layer_props["amnion"]) # columns=["decidua","chorion", "spongy", "amnion"]
 
 
 ## add totals
-df_layer_thickness["total"] = df_layer_thickness["decidua"] + \
-                            df_layer_thickness["chorion"] + \
-                            df_layer_thickness["spongy"] + \
-                            df_layer_thickness["amnion"]
+df_props["total_thickness"] = df_props["decidua-thickness"] + \
+                            df_props["chorion-thickness"] + \
+                            df_props["spongy-thickness"] + \
+                            df_props["amnion-thickness"]
 
 path_csv_output = output_dir_path / \
     f"{path_image.stem}_thickness.csv"
 
 print(f"layer thickness output path: {path_csv_output}")
-df_layer_thickness.to_csv(path_csv_output, index=False) # don't save row index
-#%% merge 
+df_props.to_csv(path_csv_output, index=False) # don't save row index
+#%% merge matlab outputs and python into one csv file
 
 from pathlib import Path
 import pandas as pd
 
 
-path_sample = Path(r"F:\Emmanuel\0-segmentation_completed\2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D".replace("\\",'/'))
+path_sample = path_image.parent
 
+# path_sample = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed\2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D".replace("\\",'/'))
 # load matlab export csv
-path_matlab_csv = list(path_sample.glob("*_Pressure_Apex.csv"))[0]
-pd_frame_apex_rise_pressure = pd.read_csv(path_matlab_csv, names=["Apex Rise", "Pressure"])
+path_matlab_csv = list(path_sample.glob("*_Apex.csv"))[0]
+df_frame_apex_rise_pressure = pd.read_csv(path_matlab_csv, names=["Apex Rise", "Pressure"])
 
 # load python thickness
 path_frame_vs_thickness = path_sample / "thickness"
 path_frame_vs_thickness_csv = list(path_frame_vs_thickness.glob("*.csv"))[0]
-pd_frame_thickness = pd.read_csv(path_frame_vs_thickness_csv)
+df_frame_thickness = pd.read_csv(path_frame_vs_thickness_csv)
+
+
+
+
+### check that they are the same length, extend if necessary
+if len(df_frame_apex_rise_pressure) != len(df_frame_thickness):
+    # this is used in the event that not all frames are segmented by relaynet
+    # if for some reason the membrane goes out of screen and segmentation fails
+    print("Error: matlab and python export don't match in number of frames")
+    print(f"apex df: {len(df_frame_apex_rise_pressure)} | thickness df: {len(df_frame_thickness)}")
+    answer = input("Extend thickness df to match apex rise df? (y/n)")
+    if answer == "y":
+        ## fill thickness df to match apex rise
+        num_missing_rows= len(df_frame_apex_rise_pressure) - len(df_frame_thickness)
+        df_copy = df_frame_thickness.copy()
+        # create list of indices to match apex rise df
+        list_new_indices = np.arange(num_missing_rows) + len(df_frame_thickness)
+        # print(df_copy.loc[len(df_copy.index)-1])
+        filler_row = ["NA"] * len(df_frame_thickness.columns) # create filler row matching number of cols 
+        for idx in list_new_indices: #fill indicex with filler row
+            df_copy.loc[idx] = filler_row
+        df_frame_thickness = df_copy # replace df
 
 # merge dataframes
-merged_df = pd.concat([pd_frame_apex_rise_pressure, pd_frame_thickness], axis=1)
+df_merged = pd.concat([df_frame_apex_rise_pressure, df_frame_thickness], axis=1)
 
-path_feats = path_sample / f"{path_sample.name}_feats.csv"
-merged_df.to_csv(path_sample / f"{path_sample.name}_feats.csv", na_rep="NA")
+# reindex rowsto star at 1
+df_merged.index = np.arange(1, len(df_frame_thickness)+1)
+df_merged.index.names = ["frame_number"] 
 
-
+path_features_csv = path_sample / f"{path_sample.name}_features.csv"
+df_merged.to_csv(path_features_csv, na_rep="NA")
+print(path_features_csv)
 #%% Copy over pressure files to hand segmented samples
 
-import re
-import shutil
+# import re
+# import shutil
 
 #get list of all samples
-path_segmented = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed".replace("\\",'/'))
-list_path_dir_segmented_samples = list(path_segmented.glob("*"))
+# path_segmented = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed".replace("\\",'/'))
+# list_path_dir_segmented_samples = list(path_segmented.glob("*"))
 
 
-#get list of pressure files - do this once here
-path_pressure = Path("Z:/Kayvan/Human Data")
-list_pressure_files = list(path_pressure.rglob("*_Pressure*.txt"))
-list_pressure_files_str = [str(p) for p in list_pressure_files]
+# #get list of pressure files - do this once here
+# path_pressure = Path("Z:/Kayvan/Human Data")
+# list_pressure_files = list(path_pressure.rglob("*_Pressure*.txt"))
+# list_pressure_files_str = [str(p) for p in list_pressure_files]
 
 
-for pos, path_dir_sample in enumerate(list_path_dir_segmented_samples):
-    pass
-    sample_name = path_dir_sample.name
+# for pos, path_dir_sample in enumerate(list_path_dir_segmented_samples):
+#     pass
+#     sample_name = path_dir_sample.name
 
-    # find corresponding pressure file that matches sample
-    path_pressure_file = list(filter(re.compile(f"{sample_name}").search, list_pressure_files_str))[0]
-    path_pressure_file = Path(path_pressure_file)
-    print(f"{pos}: {path_pressure_file.name}")
+#     # find corresponding pressure file that matches sample
+#     path_pressure_file = list(filter(re.compile(f"{sample_name}").search, list_pressure_files_str))[0]
+#     path_pressure_file = Path(path_pressure_file)
+#     print(f"{pos}: {path_pressure_file.name}")
     
     # commment in to copy files
     #shutil.copy2(path_pressure_file, path_dir_sample / path_pressure_file.name)
