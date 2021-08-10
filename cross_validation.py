@@ -31,11 +31,10 @@ from relaynet_pytorch.data_utils import get_imdb_data
 #%% LOAD DATA
 
 path_datasets = Path("F:/Emmanuel/0-h5")
-list_folds = path_datasets.glob("fold_*")
+list_folds = list(path_datasets.glob("fold_*"))
 
-dict_fold_metric_dfs  = {}
 # iterate through folds
-for fold in list_folds:
+for fold in list_folds[0:1]:
     pass
 
     fold = fold.name
@@ -130,6 +129,8 @@ for fold in list_folds:
     
     # img_num = 11
     
+    dict_fold_metric_dfs  = {} # stores df of metrics per fold
+    
     dict_layers = {
         1: "decidua",
         2: "chorion",
@@ -175,7 +176,7 @@ for fold in list_folds:
             # plt.show()
             
             # remove background layers at start/end
-            list_layers = np.unique(idx)[1:-1]
+            list_layers = np.unique(idx)[1:-1] # idx is the segmented frame
             
             # iterate through layers and compare with gt mask
             for layer_num in list_layers:
@@ -199,15 +200,17 @@ for fold in list_folds:
                 # comment in to visualize
                 # compare_orig_mask_gt_pred(im.copy(), mask_gt.copy(), mask_pred.copy(), title=f"{layer_name}, test_sample: {img_num}")
         
-    df = pd.DataFrame(dict_metrics)
+    df = pd.DataFrame(dict_metrics) #dict to dataframe
     
-    # add dataframe to a dictionary that holds the dataframes with metrics
+    # add dataframe to a dictionary that holds the dataframes with metrics, one df per fold
     dict_fold_metric_dfs[fold] = df
 #%% plots
 
+dict_dice = {}
+dict_total_error  = {}
 # iterate through dict of dataframes containing metrics for each fold
 for df_key in dict_fold_metric_dfs.keys():
-    
+    pass
     # get each individual dataframe with metrics
     df = dict_fold_metric_dfs[df_key]
     
@@ -225,22 +228,41 @@ for df_key in dict_fold_metric_dfs.keys():
             list_dice.append(df[sample_num][ind]["dice"])
             list_jaccard.append(df[sample_num][ind]["jaccard"])
             list_total_error.append(df[sample_num][ind]["total_error"])
-        
-        
-        fig, ax = plt.subplots(1,2, figsize=(20,6))
-        fig.suptitle(f"{ind}")
-        
-        ax[0].set_title(f"dice \n mean: {np.mean(list_dice):.3f}  stdev: {np.std(list_dice):.3f}")
-        ax[0].plot(list_dice)
-        ax[0].set_xlabel("Sample index ")
-        ax[0].set_ylabel("Dice Score")
-        # ax[1].set_title(f"jaccard \n mean: {np.mean(list_jaccard):.3f}  stdev: {np.std(list_jaccard):.3f}")
-        # ax[1].plot(list_jaccard)
     
-        ax[1].set_title(f"total_error \n mean: {np.mean(list_total_error):.3f}  stdev: {np.std(list_total_error):.3f}")
-        ax[1].plot(list_total_error)
-        ax[1].set_xlabel("Sample index ")
-        ax[1].set_ylabel("total error (% misclassified pixels)")
+        dict_dice[ind] = list_dice
+        dict_total_error[ind] = list_total_error
+#%%      
+        
+# plot values
+
+str_metrics = ""
+for layer_key in dict_dice.keys():
+    plt.plot(dict_dice[layer_key], label=layer_key)
+    mean = np.mean(dict_dice[layer_key])
+    stdev = np.std(dict_dice[layer_key])
+    str_metrics += f"{layer_key}   mean: {mean:.2f}  stdev: {stdev:.2f}\n"
+        
+plt.title(f"dice score across testing set \n {str_metrics}")
+plt.xlabel("image index")
+plt.ylabel("dice score")
+plt.legend(loc="center left", bbox_loc=(1,0.5))
+plt.show
+    
+
+# fig, ax = plt.subplots(1,2, figsize=(20,6))
+# fig.suptitle(f"{ind}")
+
+# ax[0].set_title(f"dice \n mean: {np.mean(list_dice):.3f}  stdev: {np.std(list_dice):.3f}")
+# ax[0].plot(list_dice)
+# ax[0].set_xlabel("Sample index ")
+# ax[0].set_ylabel("Dice Score")
+# # ax[1].set_title(f"jaccard \n mean: {np.mean(list_jaccard):.3f}  stdev: {np.std(list_jaccard):.3f}")
+# # ax[1].plot(list_jaccard)
+
+# ax[1].set_title(f"total_error \n mean: {np.mean(list_total_error):.3f}  stdev: {np.std(list_total_error):.3f}")
+# ax[1].plot(list_total_error)
+# ax[1].set_xlabel("Sample index ")
+# ax[1].set_ylabel("total error (% misclassified pixels)")
         
 
 
