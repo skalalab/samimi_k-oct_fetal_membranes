@@ -48,7 +48,7 @@ base_path = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_
 # C section samples starting 
 # 2020_07_16_C_section_38w6d
 
-sample_name = "2018_10_11_human_amniochorion_labored_term_SROM_pericervical_0002_Mode2D"
+sample_name = "2018_10_17_human_amniochorion_labored_postterm_SROM_periplacental_0002_Mode2D"
 path_sample_dir = base_path / sample_name
 path_image = path_sample_dir / f"{sample_name}.tiff"
 # images processed = [0]
@@ -248,7 +248,7 @@ list_layer_edges = [edges_decidua, edges_chorion, edges_spongy, edges_amnion]
 
 #TODO 
 start = time() 
-for frame_num, (image, labels) in enumerate(zip(list_images, list_inferences), start=1):
+for frame_num, (image, labels) in enumerate(zip(list_images[:455], list_inferences), start=1):
     print(
         f"calculating layer thickness for frame: {frame_num}/{len(list_images)}")
     pass
@@ -437,8 +437,6 @@ path_frame_vs_thickness_csv = list(path_frame_vs_thickness.glob("*.csv"))[0]
 df_frame_thickness = pd.read_csv(path_frame_vs_thickness_csv)
 
 
-
-
 ### check that they are the same length, extend if necessary
 if len(df_frame_apex_rise_pressure) != len(df_frame_thickness):
     # this is used in the event that not all frames are segmented by relaynet
@@ -457,7 +455,8 @@ if len(df_frame_apex_rise_pressure) != len(df_frame_thickness):
         for idx in list_new_indices: #fill indicex with filler row
             df_copy.loc[idx] = filler_row
         df_frame_thickness = df_copy # replace df
-
+    else:
+        assert len(df_frame_apex_rise_pressure) == len(df_frame_thickness), "df_apex is not the same length as df_thickness"
 # merge dataframes
 df_merged = pd.concat([df_frame_apex_rise_pressure, df_frame_thickness], axis=1)
 
