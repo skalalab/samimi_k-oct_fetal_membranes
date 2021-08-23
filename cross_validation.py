@@ -34,12 +34,14 @@ path_datasets = Path("F:/Emmanuel/0-h5")
 list_folds = list(path_datasets.glob("fold_*"))
 
 # iterate through folds
-for fold in list_folds[0:1]:
+fold_number = 9
+for fold in list_folds[fold_number:fold_number+1]: # get just one fold # 
     pass
-
+    # fold = list_folds[fold_number].name
     fold = fold.name
     suffix= f"_w_augs_{fold}"
     path_dataset =  path_datasets / fold
+    print(f"floading fold: {path_dataset}")
     
     rows_slicing, cols_slicing = (50,-50), ("start", "end")
     train_data, test_data = get_imdb_data(path_dataset, suffix, row_slice=rows_slicing, col_slice=cols_slicing) #,row_upper_limit,column_lower_limit )
@@ -55,7 +57,6 @@ for fold in list_folds[0:1]:
     
     print("Train size: %i" % len(train_data))
     print("Test size: %i" % len(test_data))
-    
         
     #%%   segment test samples 
     
@@ -231,6 +232,12 @@ for df_key in dict_fold_metric_dfs.keys():
     
         dict_dice[ind] = list_dice
         dict_total_error[ind] = list_total_error
+
+## Save csv dataframes
+df_dice = pd.DataFrame(dict_dice)
+df_dice.to_csv(path_dataset / f"{fold}-dice_scores.csv")
+df_dict_total_error = pd.DataFrame(dict_total_error)
+df_dict_total_error.to_csv(path_dataset / f"{fold}-total_error.csv")
 #%%      
         
 # plot values
@@ -242,11 +249,11 @@ for layer_key in dict_dice.keys():
     stdev = np.std(dict_dice[layer_key])
     str_metrics += f"{layer_key}   mean: {mean:.2f}  stdev: {stdev:.2f}\n"
         
-plt.title(f"dice score across testing set \n {str_metrics}")
+plt.title(f"{fold} \n dice score across testing set \n {str_metrics}")
 plt.xlabel("image index")
 plt.ylabel("dice score")
-plt.legend(loc="center left", bbox_loc=(1,0.5))
-plt.show
+plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+plt.show()
     
 
 # fig, ax = plt.subplots(1,2, figsize=(20,6))
@@ -264,6 +271,68 @@ plt.show
 # ax[1].set_xlabel("Sample index ")
 # ax[1].set_ylabel("total error (% misclassified pixels)")
         
+
+#%% COMPUTE CROSS FOLD MEANS AND GRAPH
+
+
+path_datasets = Path("F:/Emmanuel/0-h5")
+list_folds = list(path_datasets.glob("fold_*"))
+
+
+dict_decidua = {}
+dict_amnion = {}
+dict_spongy = {}
+dict_chorion = {}
+for folder in list_folds:
+    pass
+    csv_file = list(folder.glob("*dice*.csv"))[0] # get csv file 
+
+    df = pd.read_csv(csv_file)
+    
+    dict_decidua[folder.name] = df["decidua"]
+    dict_amnion[folder.name]  = df["amnion"]
+    dict_spongy[folder.name]  = df["spongy"]
+    dict_chorion[folder.name] = df["chorion"]
+    
+
+# plots
+
+
+dict_layers = {
+    "decidua" : dict_decidua, 
+    "amnion" : dict_amnion, 
+    "spongy" : dict_spongy, 
+    "chorion" : dict_chorion
+    }
+
+for layer_name in dict_layers.keys():
+    pass
+    fig, ax = plt.subplots(1,10,figsize=(20,10))
+
+    layer_values = []
+    
+    print(layer_name)
+    layer = dict_layers[layer_name]
+    for pos, fold in enumerate(layer.keys()):
+        pass
+            
+        #ax[pos].set_title(f"fold: {pos}")
+        ax[pos].boxplot(layer[fold])
+        ax[pos].set_xlabel(f"fold: {pos+1}")
+        ax[pos].set_ylim(0,1)
+        ax[pos].set_xticklabels([])
+        
+        #append to list
+        layer_values += list(layer[fold])
+    
+    
+    fig.suptitle(f"{layer_name}\n mean: {np.mean(layer_values):.3f}" \
+                 f"\n stdev: {np.std(layer_values):.3f}")
+    plt.show()
+
+    
+
+
 
 
     
