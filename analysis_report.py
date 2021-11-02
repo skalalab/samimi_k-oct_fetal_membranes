@@ -26,7 +26,7 @@ count_processed_features_csv = 0
 count_processed = 0
 count_total = 0
 ############## PRINT REPORT
-for num_sample, path_sample in enumerate(list_path_all_samples[:], start=1):
+for num_sample, path_sample in enumerate(list_path_all_samples[:], start=1): #modify to display less 
     print(f"{num_sample})  {path_sample.name}")
     
     ##################
@@ -107,24 +107,25 @@ for num_sample, path_sample in enumerate(list_path_all_samples[:], start=1):
             print(f"{' ' * 8}[x] {stem_subsample}")
             count_processed += 1
             
-            # COPY IMAGES TO SOFT TISSUE LAB FOLDER
-            path_soft_tissue_output = path_dataset_soft_tissue_lab / path_sample.name /"Inflation" / stem_subsample
-            if not path_soft_tissue_output.exists():
-                path_soft_tissue_output.mkdir(parents=True)
+            # # COPY IMAGES TO SOFT TISSUE LAB FOLDER
+            # path_soft_tissue_output = path_dataset_soft_tissue_lab / path_sample.name /"Inflation" / stem_subsample
+            # if not path_soft_tissue_output.exists():
+            #     path_soft_tissue_output.mkdir(parents=True)
             
-            # copy necessary files if they don't already exist
+            # # copy necessary files if they don't already exist
             
-            # features 
-            path_features_csv= list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_features))[0]
-            if not (path_soft_tissue_output / Path(path_features_csv).name).exists():
-                shutil.copy2(path_features_csv, path_soft_tissue_output)
+            # # features 
+            # path_features_csv= list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_features))[0]
+            # if not (path_soft_tissue_output / Path(path_features_csv).name).exists():
+            #     shutil.copy2(path_features_csv, path_soft_tissue_output)
             
-            # gif
-            path_gif = list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_gif))[0]
-            if not (path_soft_tissue_output / Path(path_gif).name).exists():
-                shutil.copy2(path_gif, path_soft_tissue_output)
+            # # gif
+            # path_gif = list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_gif))[0]
+            # if not (path_soft_tissue_output / Path(path_gif).name).exists():
+            #     shutil.copy2(path_gif, path_soft_tissue_output)
 
-            assert Path(path_features_csv).exists() and Path(path_gif).exists(), "Error either gif or features_csv path is invalid"
+            # assert Path(path_features_csv).exists() and Path(path_gif).exists(), "Error either gif or features_csv path is invalid"
+        
         else:
             print(f"{' ' * 8}[ ] {stem_subsample}")
             if not bool_thickness:
