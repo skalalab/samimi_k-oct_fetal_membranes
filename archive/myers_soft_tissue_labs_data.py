@@ -22,7 +22,7 @@ path_output = Path("F:/Emmanuel/pressure_data")
 
 ####
 # list_sample = Path(r"Z:\Kayvan\Human Data\2018_12_12_term_labor_SROM_39w5d".replace("\\","/"))
-list_sample = Path(r"Z:\Kayvan\Human Data\2018_10_09_term_labor_AROM_39w5d".replace("\\","/"))
+list_sample = Path(r"Z:\Kayvan\Human Data\2018_10_09_term_labor_AROM_39w5d")
 
 list_path_samples = [list_sample]
 
