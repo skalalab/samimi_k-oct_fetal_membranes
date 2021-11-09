@@ -53,7 +53,7 @@ path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dat
 #     print(p.name)
 
 # find amniochorion txt files and keep those with corresponding .tiff images
-path_sample = path_dataset / "2018_11_14_term_labor_SROM_39w6d"
+path_sample = path_dataset / "2020_12_18_C_section_39w0d"
 
 ################## same as report code
 # ALL FILES IN SUBSAMPLE 
@@ -73,7 +73,7 @@ for path_image in list_path_images:
     pass
     assert path_image.exists(), "Image does not exist: {path_image}"
     im = Image.open(path_image)
-    if not im.size == (3100, 265): # make sure images are same size as trained/originals
+    if not im.size == (3100, 265): # make sure images are same size as originals
         continue
     list_images_to_process.append(path_image)
 
