@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pylab as plt
 import matplotlib as mpl 
+# mpl.use("TKAgg")
 mpl.rcParams["figure.dpi"] = 300
 import numpy as np
 
@@ -17,7 +18,7 @@ path_dataset_soft_tissue_lab = Path(r"Z:\0-Projects and Experiments\KS - OCT mem
 
 
 list_feature_csv_files = list(path_dataset_soft_tissue_lab.rglob("*features.csv"))
-
+#%%
 for file in list_feature_csv_files:
     pass
     df = pd.read_csv(file)
@@ -76,6 +77,7 @@ for file in list_feature_csv_files:
     plt.tight_layout()
     path_figure = file.parent / f"{file.stem.rsplit('_',1)[0]}_fig.png"
     plt.savefig(path_figure)
+    print(path_figure)
     plt.show()
     
     # thickness graph

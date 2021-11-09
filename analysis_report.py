@@ -11,7 +11,7 @@ from PIL import Image
 import shutil
 
 # GET PATHS TO ALL 65 SAMPLES AND ALL FILES
-path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files".replace("\\",'/'))
+path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 list_path_all_samples = list(path_dataset.glob("*"))
 list_path_all_files = list(path_dataset.rglob("*"))
 list_path_str_all_files = [str(p) for p in list_path_all_files]
@@ -65,6 +65,12 @@ for num_sample, path_sample in enumerate(list_path_all_samples[:], start=1): #mo
     list_path_str_gif = list(filter(re.compile(".*.gif").search,list_path_str_subsample_all_files ))
     list_gif_filenames_processed = [Path(p).stem for p in list_path_str_gif]
     
+    # #list notes
+    # list_path_str_notes = list(filter(re.compile(".*Notes.txt").search, list_path_str_subsample_all_files ))
+    # list_path_notes = [Path(p).stem for p in list_path_str_notes]
+    # if (len(list_path_notes)) !=0:
+    #     print(list_path_notes)
+    
     # list of gif files
     list_path_str_features = list(filter(re.compile(".*features.csv").search,list_path_str_subsample_all_files ))
     list_features_filenames_processed = [Path(p).stem.rsplit("_",1)[0] for p in list_path_str_features]
@@ -107,22 +113,29 @@ for num_sample, path_sample in enumerate(list_path_all_samples[:], start=1): #mo
             print(f"{' ' * 8}[x] {stem_subsample}")
             count_processed += 1
             
-            # # COPY IMAGES TO SOFT TISSUE LAB FOLDER
+            # COPY IMAGES TO SOFT TISSUE LAB FOLDER
             # path_soft_tissue_output = path_dataset_soft_tissue_lab / path_sample.name /"Inflation" / stem_subsample
             # if not path_soft_tissue_output.exists():
             #     path_soft_tissue_output.mkdir(parents=True)
             
             # # copy necessary files if they don't already exist
-            
             # # features 
-            # path_features_csv= list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_features))[0]
+            # path_features_csv = list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_features))[0]
             # if not (path_soft_tissue_output / Path(path_features_csv).name).exists():
+            #     pass
             #     shutil.copy2(path_features_csv, path_soft_tissue_output)
             
             # # gif
             # path_gif = list(filter(re.compile(f".*{stem_subsample}.*").search, list_path_str_gif))[0]
             # if not (path_soft_tissue_output / Path(path_gif).name).exists():
+            #     pass
             #     shutil.copy2(path_gif, path_soft_tissue_output)
+
+            # # notes - copy if it exists for the sample
+            # path_notes = (Path(path_gif).parent / "Notes.txt")
+            # if not (path_soft_tissue_output / "Notes.txt").exists() and path_notes.exists():
+            #         print(path_notes)
+            #         shutil.copy2(path_notes, path_soft_tissue_output)
 
             # assert Path(path_features_csv).exists() and Path(path_gif).exists(), "Error either gif or features_csv path is invalid"
         

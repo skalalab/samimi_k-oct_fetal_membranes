@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 base_path = r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files/"
-str_path = base_path + r"2020_12_18_C_section_39w0d\Inflation\2020_12_18_C_section_39w0d_periplacental_amniochorion"
+str_path = base_path + r"2020_12_17_C_section_40w4d\Inflation\2020_12_17_C_section_40w4d_periplacental_amniochorion"
 path_sample = Path(str_path)
 
 # path_sample = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\oct_dataset_3100x256\0-segmentation_completed\2018_10_09_human_amniochorion_labored_term_AROM_pericervical_0002_Mode2D".replace("\\",'/'))
