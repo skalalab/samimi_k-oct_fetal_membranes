@@ -93,14 +93,30 @@ import holoviews as hv
 from holoviews import opts
 # hv.extension("bokeh")
 hv.extension("matplotlib")
+
+import matplotlib as mpl
+mpl.rcParams["figure.dpi"] =300
  
 #%% Amniochorion --> periplacental vs pericervical
 
 
 #amniochorion 
-df_amniochorion = df[df["layers"] == "amniochorion"]
-df_amniochorion = df_amniochorion.dropna()
+
+df = df.dropna() # if you don't do this it won't plot data
+boxwhisker = hv.BoxWhisker(df, ["location", "layers"], "max_pressure", label="Max Pressures" )
+
+
+boxwhisker.opts(xrotation=90)
 
 #%%
+hv.render(boxwhisker, backend="matplotlib") # plot data
+
+#%%
+
+groups = [chr(65+g) for g in np.random.randint(0, 3, 200)]
+boxwhisker = hv.BoxWhisker((groups, np.random.randint(0, 5, 200), np.random.randn(200)),
+              ['Group', 'Category'], 'Value').sort()
+boxwhisker.opts(
+    opts.BoxWhisker(box_color='white', height=400, show_legend=False, whisker_color='gray', width=600))
     
     
