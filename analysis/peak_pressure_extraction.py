@@ -45,6 +45,11 @@ for path_sample in tqdm(list_path_sample_dirs):
     for subsample_dir in list_str_all_files_subsample:
         pass
    
+        # skip newspaper sample in 
+        # Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files\2018_10_10_postterm_labor_AROM_41w2d\Inflation
+        if "Newspaper" in subsample_dir:
+            continue
+        
         #get all files 
         list_pressure_files = list(Path(subsample_dir).glob("*ressure*txt"))
         list_early_2020_pressure_files = list(Path(subsample_dir).glob("*Mode2D.txt"))
@@ -81,6 +86,21 @@ for path_sample in tqdm(list_path_sample_dirs):
     # amniochorion and pericervical
     # list_path_amniochorion_pericervical = list(filter(re.compile("pericervical").search, list_path_amniochorion))[0]
 
-    
+#%%
+import pandas as pd 
+import numpy as np
+import holoviews as hv 
+from holoviews import opts
+# hv.extension("bokeh")
+hv.extension("matplotlib")
+ 
+#%% Amniochorion --> periplacental vs pericervical
+
+
+#amniochorion 
+df_amniochorion = df[df["layers"] == "amniochorion"]
+df_amniochorion = df_amniochorion.dropna()
+
+#%%
     
     
