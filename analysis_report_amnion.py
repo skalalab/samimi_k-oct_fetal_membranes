@@ -1,27 +1,58 @@
-
 from pprint import pprint
-
 from pathlib import Path
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 
+# get list of all subsamples
+list_subsample_dirs = list(path_dataset.glob("*"))
+list_subsample_dirs = [p for p in list_subsample_dirs if p.is_dir()]
 
-# get pressure files
-layer = "amnion"
-list_path_pressure_files = list(path_dataset.rglob(f"*_{layer}_*.txt")) + \
-                                list(path_dataset.rglob(f"_{layer}_*Mode2D*.txt"))
 
-for idx, path in enumerate(list_path_pressure_files):
+count_samples_to_process = 0
+
+for pos, dir_subsample in enumerate(list_subsample_dirs):
     pass
+    print(f"{pos})  {dir_subsample.stem}")
+    # get pressure files
     
-    if "ressure" in str(path):
-        base_name = path.stem.rsplit("_", 1)[0]
-        path_im = path.parent / f"{base_name}.tiff"
-    else:
-        #one of the pressure files with Mode2D.txt
+    list_layers = ["amnion", "chorion"]
+    # layer = "amnion"
+    for layer in list_layers:
+        list_path_pressure_files = list(dir_subsample.rglob(f"*_{layer}_*.txt")) + \
+                                        list(dir_subsample.rglob(f"_{layer}_*Mode2D*.txt"))
         
-    # is there a corresponding tiff next to it
+        
 
+        for idx, path_pressure in enumerate(list_path_pressure_files):
+            pass
+            
+            # one of the pressure files with _Pressure.txt or Pressure_failure.txt
+            if "ressure" in str(path_pressure):
+                base_name = path_pressure.stem.rsplit("_", 1)[0]
+                path_im = path_pressure.parent / f"{base_name}.tiff"
+            # one of the pressure files with Mode2D.txt
+            else:
+                base_name = path_pressure.stem
+                path_im = path_pressure.parent / f"{base_name}.tiff"
+            
+            # If corresponding tiff file doesn't exist continue to next sample
+            if not path_im.exists():
+                continue
 
-    # is there a _mask.tiff for segmented mask?
-    # is there a _Pressure_Apex.csv file?
+            
+            # check if segmentation and apex rise exist
+            bool_seg_tiff_file_exists = Path(path_im.parent / (path_im.stem + "_seg.tiff")).exists()
+            bool_seg_file_exists = Path(path_im.parent / (path_im.stem + "_seg.csv")).exists()
+            bool_apex_rise_file_exists = Path(path_im.parent / (path_im.stem + "_Pressure_Apex.csv")).exists()
+            
+            
+            if bool_seg_tiff_file_exists and bool_seg_file_exists and bool_apex_rise_file_exists:
+                print(f"{' ' * 8} [x] {layer} | {path_pressure.parent.stem}")
+            else:
+                count_samples_to_process += 1
+                print(f"{' ' * 8} [ ] {layer} | {path_pressure.parent.stem}")
+                if not bool_seg_tiff_file_exists : print(f"{' ' * 12} [ ] segmentation tiff" ) 
+                if not bool_seg_file_exists: print(f"{' ' * 12} [ ] thickness/length/area csv" ) 
+                if not bool_apex_rise_file_exists: print(f"{' ' * 12} [ ] apex rise csv (matlab) " ) 
+
+print(f"sample to process: {count_samples_to_process}")
