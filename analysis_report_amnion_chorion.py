@@ -9,8 +9,8 @@ list_subsample_dirs = [p for p in list_subsample_dirs if p.is_dir()]
 
 
 count_samples_to_process = 0
-
-for pos, dir_subsample in enumerate(list_subsample_dirs):
+count_total = 0
+for pos, dir_subsample in enumerate(list_subsample_dirs[:]):
     pass
     print(f"{pos})  {dir_subsample.stem}")
     # get pressure files
@@ -39,6 +39,8 @@ for pos, dir_subsample in enumerate(list_subsample_dirs):
             if not path_im.exists():
                 continue
 
+            # valid sample to process
+            count_total += 1
             
             # check if segmentation and apex rise exist
             bool_seg_tiff_file_exists = Path(path_im.parent / (path_im.stem + "_seg.tiff")).exists()
@@ -51,8 +53,8 @@ for pos, dir_subsample in enumerate(list_subsample_dirs):
             else:
                 count_samples_to_process += 1
                 print(f"{' ' * 8} [ ] {layer} | {path_pressure.parent.stem}")
-                if not bool_seg_tiff_file_exists : print(f"{' ' * 12} [ ] segmentation tiff" ) 
-                if not bool_seg_file_exists: print(f"{' ' * 12} [ ] thickness/length/area csv" ) 
+                # if not bool_seg_tiff_file_exists : print(f"{' ' * 12} [ ] segmentation tiff" ) 
+                # if not bool_seg_file_exists: print(f"{' ' * 12} [ ] thickness/length/area csv" ) 
                 if not bool_apex_rise_file_exists: print(f"{' ' * 12} [ ] apex rise csv (matlab) " ) 
 
-print(f"sample to process: {count_samples_to_process}")
+print(f"samples to process: {count_samples_to_process}/{count_total}")
