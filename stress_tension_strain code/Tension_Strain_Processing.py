@@ -3,7 +3,10 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pylab as plt
 import numpy as np
-from numpy.linalg import lstsq, pinv
+from numpy.linalg import lstsq
+import matplotlib as mpl
+mpl.rcParams["figure.dpi"] = 300
+
 
 path_csv = Path(r"Z:\0NDL8U~X\K5VHRD~Q\HS875H~W\2S9W4P~Z\IIZ6KD~H\2CYKSR~Z\2OPO3V~E.CSV")
 
@@ -38,16 +41,17 @@ idx_loaded = get_region_indices(df_pressure_apex["Pressure"].values,
                              thresh_loaded_high)
 
 ## plot regions
-plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"], label="all data")
+plt.title("Apex Rise vs Pressure")
+plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"])
 #toe region
 plt.plot(df_pressure_apex["Apex Rise"][idx_toe[0]:idx_toe[1]], 
-         df_pressure_apex["Pressure"][idx_toe[0]:idx_toe[1]], label="toe")
+         df_pressure_apex["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region")
 # loaded region
 plt.plot(df_pressure_apex["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
-         df_pressure_apex["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded")
+         df_pressure_apex["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region")
 plt.legend()
-plt.xlabel("Apex Rise")
-plt.ylabel("Pressure")
+plt.xlabel("Apex Rise [mm]")
+plt.ylabel("Pressure [kPa]")
 plt.show()
 
 #%% Tension-Strain Analysis
@@ -60,8 +64,6 @@ meters_to_mm = 1000
 initial_radius = (initial_apex**2 + device_radius**2)/(2 * initial_apex)   # in [mm]
 
 # add offset initial offset to apex and set starting value to initial offset
-# Apex = InitialApex + apex_rise_metric_cropped;
-# Apex = cat(1, InitialApex, Apex);
 apex = initial_apex + np.asarray(df_pressure_apex["Apex Rise"]) # add offset
 apex = np.insert(apex, 0, initial_apex)
 
@@ -79,8 +81,8 @@ strain = apex / radius # *****
 # lin_coeffs_toe = C_toe\d_toe;                       % solve for linear fit coefficients
 # TensionMod_toe = lin_coeffs_toe(1);                 % tangent modulus of the toe region in [N/m]
 
-
 # y = mx + c==> y = Ap
+# A = [[x 1]] and p = [[m], [c]] 
 # https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html
 # strain, concatenate a column of ones for matrix opearation
 
@@ -92,23 +94,45 @@ def best_fit_line(A, y):
     m,c = lstsq(A, y, rcond=None)[0]
     return m, c  # m=slope, c=yintercept
 
-# toe region 
-slope, y_int = best_fit_line(strain[idx_toe[0]:idx_toe[1]],
-                            tension[idx_toe[0]:idx_toe[1]])
+#%% TENSIONS-STRAIN PLOTS 
 
-x = df_pressure_apex["Apex Rise"][idx_toe[0]:idx_toe[1]]
-plt.plot(x, slope*x + y_int, label="toe region")
+plt.title("Tension vs Strain")
+tension_meters = tension*1000
+plt.plot(strain, tension_meters)
+
+# TOE REGION
+
+toe_strain = strain[idx_toe[0]:idx_toe[1]]
+toe_tension = tension_meters[idx_toe[0]:idx_toe[1]]
+#
+plt.plot(toe_strain, toe_tension , color="r")
+toe_slope, toe_y_int = best_fit_line(toe_strain, toe_tension)
+x = toe_strain
+plt.plot(x, toe_slope*x + toe_y_int, label="toe", color="r")
+plt.text(np.min(toe_strain), np.mean(toe_tension), f"Tension Modulus\n={int(toe_slope)} [N/m] ",color="r")
 
 
-#%% graphs
+# LOADED
+loaded_strain = strain[idx_loaded[0]:idx_loaded[1]]
+loaded_tension = tension_meters[idx_loaded[0]:idx_loaded[1]]
+
+plt.plot(loaded_strain, loaded_tension , color="g")
+loaded_slope, loaded_y_int = best_fit_line(loaded_strain, loaded_tension)
+x = loaded_strain
+plt.plot(x, loaded_slope*x + loaded_y_int, label="loaded", color="g")
+plt.text(np.min(loaded_strain)*.9, np.mean(loaded_tension), f"Tension Modulus\n={int(loaded_slope)} [N/m] ",color="g")
 
 
+## FINISH PLOTTING
+plt.legend()
+plt.xlabel("Strain")
+plt.ylabel("Tension N/m")
+plt.show()
 
 #%%
 
 # loaded region
-slope, y_int = best_fit_line(strain[idx_loaded[0]:idx_loaded[1]],
-                            tension[idx_loaded[0]:idx_loaded[1]])
+
 
 # Tension instead of Stress
 # C_loaded = cat(2, Strain(ind_loaded_low:ind_loaded_high), ones(ind_loaded_high-ind_loaded_low+1,1));
