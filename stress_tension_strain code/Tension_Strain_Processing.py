@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import pandas as pd
 import matplotlib.pylab as plt
@@ -8,7 +7,14 @@ import matplotlib as mpl
 mpl.rcParams["figure.dpi"] = 300
 
 
-path_csv = Path(r"Z:\0NDL8U~X\K5VHRD~Q\HS875H~W\2S9W4P~Z\IIZ6KD~H\2CYKSR~Z\2OPO3V~E.CSV")
+
+path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
+                
+list_path_features_csv = list(path_dataset.rglob("*amniochorion*features.csv"))
+
+
+# path_csv = Path(r"Z:\0NDL8U~X\K5VHRD~Q\HS875H~W\2S9W4P~Z\IIZ6KD~H\2CYKSR~Z\2OPO3V~E.CSV")
+
 
 df = pd.read_csv(path_csv)
 df = df.dropna()
