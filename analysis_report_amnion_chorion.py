@@ -10,7 +10,7 @@ list_subsample_dirs = [p for p in list_subsample_dirs if p.is_dir()]
 
 count_samples_to_process = 0
 count_total = 0
-for pos, dir_subsample in enumerate(list_subsample_dirs[:]):
+for pos, dir_subsample in enumerate(list_subsample_dirs[:50]):
     pass
     print(f"{pos})  {dir_subsample.stem}")
     # get pressure files
@@ -21,8 +21,6 @@ for pos, dir_subsample in enumerate(list_subsample_dirs[:]):
         list_path_pressure_files = list(dir_subsample.rglob(f"*_{layer}_*.txt")) + \
                                         list(dir_subsample.rglob(f"_{layer}_*Mode2D*.txt"))
         
-        
-
         for idx, path_pressure in enumerate(list_path_pressure_files):
             pass
             
@@ -48,7 +46,9 @@ for pos, dir_subsample in enumerate(list_subsample_dirs[:]):
             bool_apex_rise_file_exists = Path(path_im.parent / (path_im.stem + "_Pressure_Apex.csv")).exists()
             
             
-            if bool_seg_tiff_file_exists and bool_seg_file_exists and bool_apex_rise_file_exists:
+            # if bool_seg_tiff_file_exists and bool_seg_file_exists and bool_apex_rise_file_exists:
+            if bool_apex_rise_file_exists:
+
                 print(f"{' ' * 8} [x] {layer} | {path_pressure.parent.stem}")
             else:
                 count_samples_to_process += 1

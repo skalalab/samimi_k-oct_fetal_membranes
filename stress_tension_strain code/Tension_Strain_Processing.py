@@ -9,19 +9,14 @@ mpl.rcParams["figure.dpi"] = 300
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
                 
-list_path_features_csv = list(path_dataset.rglob("*amniochorion*features.csv"))
+# list_path_features_csv = list(path_dataset.rglob("*amniochorion*features.csv"))
+list_path_features_csv = list(path_dataset.rglob("*features.csv"))
+
 
 # store values 
-dict_tension_modulus = {
-    "labored" : {
-        "toe":[],
-        "loaded":[]
-        },
-    "unlabored": {
-        "toe":[],
-        "loaded":[]
-        }
-    }
+dict_tension_modulus = {}
+
+list_toe_greater_than_loaded = []
 
 for pos, path_csv in enumerate(list_path_features_csv[:]):
     df = pd.read_csv(path_csv)
@@ -60,26 +55,33 @@ for pos, path_csv in enumerate(list_path_features_csv[:]):
     if thresh_loaded_high < thresh_loaded_low:
         print(f"Error Loaded region: range error. lower boundary greater than upper boundary")
         print(f"{path_csv}")
+        list_toe_greater_than_loaded.append(path_csv)
+        # plot invalid region
+        plt.title(f"INVALID RANGE \n Apex Rise vs Pressure \n {pos} | {path_csv.stem}")
+        plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"])
+        plt.xlabel("Apex Rise [mm]")
+        plt.ylabel("Pressure [kPa]")
+        plt.show()
         continue
     idx_loaded = get_region_indices(df_pressure_apex["Pressure"].values,
                                  thresh_loaded_low,
                                  thresh_loaded_high)
     
     ## plot regions
-    plt.title(f"Apex Rise vs Pressure \n {pos} | {path_csv.stem}")
-    plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"])
-    #toe region
-    plt.plot(df_pressure_apex["Apex Rise"][idx_toe[0]:idx_toe[1]], 
-             df_pressure_apex["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region",
-             )
-    # loaded region
-    plt.plot(df_pressure_apex["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
-             df_pressure_apex["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region",
-             )
-    plt.legend()
-    plt.xlabel("Apex Rise [mm]")
-    plt.ylabel("Pressure [kPa]")
-    plt.show()
+    # plt.title(f"Apex Rise vs Pressure \n {pos} | {path_csv.stem}")
+    # plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"])
+    # #toe region
+    # plt.plot(df_pressure_apex["Apex Rise"][idx_toe[0]:idx_toe[1]], 
+    #          df_pressure_apex["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region",
+    #          )
+    # # loaded region
+    # plt.plot(df_pressure_apex["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
+    #          df_pressure_apex["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region",
+    #          )
+    # plt.legend()
+    # plt.xlabel("Apex Rise [mm]")
+    # plt.ylabel("Pressure [kPa]")
+    # plt.show()
     
     #%% Tension-Strain Analysis
     
@@ -123,53 +125,117 @@ for pos, path_csv in enumerate(list_path_features_csv[:]):
     
     #%% TENSIONS-STRAIN PLOTS 
     
-    plt.title(f"Tension vs Strain \n {path_csv.stem}")
+
     tension_meters = tension*1000
-    plt.plot(strain, tension_meters)
     
     # TOE REGION
-    
     toe_strain = strain[idx_toe[0]:idx_toe[1]]
     toe_tension = tension_meters[idx_toe[0]:idx_toe[1]]
     #
-    plt.plot(toe_strain, toe_tension , color="r")
+  
     toe_slope, toe_y_int = best_fit_line(toe_strain, toe_tension)
-    x = toe_strain
-    plt.plot(x, toe_slope*x + toe_y_int, label="toe", color="r")
-    plt.text(np.min(toe_strain), np.mean(toe_tension), f"Tension Modulus\n={int(toe_slope)} [N/m] ",color="r")
+    x_toe = toe_strain
+   
     
-    
-    # LOADED
+    # LOADED REGION
     loaded_strain = strain[idx_loaded[0]:idx_loaded[1]]
     loaded_tension = tension_meters[idx_loaded[0]:idx_loaded[1]]
-    
-    plt.plot(loaded_strain, loaded_tension , color="g")
     loaded_slope, loaded_y_int = best_fit_line(loaded_strain, loaded_tension)
-    x = loaded_strain
-    plt.plot(x, loaded_slope*x + loaded_y_int, label="loaded", color="g")
-    plt.text(np.min(loaded_strain)*.9, np.mean(loaded_tension), f"Tension Modulus\n={int(loaded_slope)} [N/m] ",color="g")
+    x_loaded = loaded_strain
     
-    
-    ## populate dictionary of modulus
-    if "C_section" in path_csv.stem:
-        pass
-        dict_tension_modulus["unlabored"]["toe"].append(toe_slope)
-        dict_tension_modulus["unlabored"]["loaded"].append(loaded_slope) 
-    else:
-        dict_tension_modulus["labored"]["toe"].append(toe_slope)
-        dict_tension_modulus["labored"]["loaded"].append(loaded_slope) 
+    ## plots
+    if toe_slope > loaded_slope:
         
+        plt.title(f"Tension vs Strain \n {path_csv.stem}")
+        
+        plt.plot(strain, tension_meters)
+        
+        # toe
+        plt.plot(toe_strain, toe_tension , color="r")
+        plt.plot(x_toe, toe_slope*x_toe + toe_y_int, label="toe", color="r")
+        plt.text(np.min(toe_strain), np.mean(toe_tension), f"Tension Modulus\n={int(toe_slope)} [N/m] ",color="r")
+        # loaded
+        plt.plot(loaded_strain, loaded_tension , color="g")
+        plt.plot(x_loaded, loaded_slope*x_loaded + loaded_y_int, label="loaded", color="g")
+        plt.text(np.min(loaded_strain)*.9, np.mean(loaded_tension), f"Tension Modulus\n={int(loaded_slope)} [N/m] ",color="g")
+        
+        plt.legend()
+        plt.xlabel("Strain")
+        plt.ylabel("Tension [N/m]")
+        plt.show()
     
-    ## FINISH PLOTTING
-    plt.legend()
-    plt.xlabel("Strain")
-    plt.ylabel("Tension [N/m]")
-    plt.show()
+    
+    
+    ## SAVE VALUES INTO A DICTIONARY
+    sample_name = path_csv.stem.rsplit("_",1)[0]
+    dict_tension_modulus[sample_name] = {} # add entry for this sample
+    dict_tension_modulus[sample_name]["sample_path"] = path_csv
+    
+    # TERM    
+    dict_tension_modulus[sample_name]["term"] = "unlabored" if "C_section" in path_csv.stem \
+        else "labored"
+    
+    # save tension modulus
+    dict_tension_modulus[sample_name]["toe_tension"] = toe_slope
+    dict_tension_modulus[sample_name]["loaded_tension"] = loaded_slope
+    
+    # Location
+    if "pericervical" in path_csv.stem:
+        dict_tension_modulus[sample_name]["location"] = "pericervical"  
+    elif "periplacental" in path_csv.stem:
+        dict_tension_modulus[sample_name]["location"] = "periplacental" 
+    
+    # LAYERS (Amniochorion, amnion and chorion)
+    if "amniochorion" in path_csv.stem:
+        dict_tension_modulus[sample_name]["layers"] = "amniochorion"
+    elif "amnion" in path_csv.stem:
+        dict_tension_modulus[sample_name]["layers"] = "amnion"
+    elif "chorion" in path_csv.stem:
+        dict_tension_modulus[sample_name]["layers"] = "chorion"
+    else: dict_tension_modulus[sample_name]["layers"] = np.NaN
+    
 
-#%%
 
-# import holoviews as hv
-# hv.extensions["matplotlib"]
+
+#%% GENERATE PLOT
+df = pd.DataFrame(dict_tension_modulus).transpose()
+df.index.name = "sample_name"
+
+
+import holoviews as hv
+from holoviews import opts
+hv.extension("bokeh")
+
+path_figures = Path(r"C:/Users/econtrerasguzman/Desktop/development/fetal_membrane_kayvan/stress_tension_strain code/figures")
+
+df_loaded_tension_greater_than_toe = df[df["loaded_tension"] > df["toe_tension"]]
+
+df_funky = df[df["loaded_tension"] < df["toe_tension"]]
+
+kdims = [("term","Pregnancy Term"),
+         ("location", "Location")
+         ] 
+vdims = [("toe_tension","Toe Tension Modulus")]
+boxwhisker_toe = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
+boxwhisker_toe.opts(title="Toe Region", tool=["hover"])
+
+vdims = [("loaded_tension","Loaded Tension Modulus")]
+boxwhisker_loaded = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
+boxwhisker_loaded.opts(title="Loaded Region", tool=["hover"])
+
+layout = boxwhisker_toe + boxwhisker_loaded
+layout.opts(
+    opts.BoxWhisker(width=800, height=800)
+    )
+# boxwhisker.opts(width=800, height=800)
+
+hv.save(layout, path_figures / "tension_modulus_boxwhisker_plots.html")
+
+# boxwhisker_location = hv.BoxWhisker(df_loaded_tension_greater_than_toe,
+#                                     kdims=("location","Location"),
+#                                     vdims=("toe_tension", "Toe Tension"))
+# boxwhisker_location.opts(width=800, height=800)
+# hv.save(boxwhisker_location, path_figures / "location_tension_modulus_boxwhisker_plots.html")
 
 
 # if __name__ == "__main__":
