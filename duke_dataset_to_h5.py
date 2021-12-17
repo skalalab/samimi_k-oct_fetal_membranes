@@ -260,10 +260,10 @@ if __name__ == '__main__':
     
         #### export small dataset
                 # reduce dataset
-        h5_data_small = h5_data[:110,...]
-        h5_labels_small = h5_labels[:110,...]
-        h5_set_small = h5_set[:110,...]
-        h5_set_small[88:,...] = 3
+        # h5_data_small = h5_data[:110,...]
+        # h5_labels_small = h5_labels[:110,...]
+        # h5_set_small = h5_set[:110,...]
+        # h5_set_small[88:,...] = 3
         
         with h5py.File(f"{str(path_directory.parent / 'data_small.h5')}", 'w') as f:
             f.create_dataset('oct_data', data = h5_data_small.astype(np.float64, copy=False))
