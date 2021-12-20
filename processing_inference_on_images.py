@@ -24,7 +24,7 @@ import re
 
 # set cwd to relaynet directory
 os.chdir("C:/Users/OCT/Desktop/development/fetal_membrane_kayvan")
-from layer_edge_fitting_code import compute_layer_thickness
+from processing_layer_edge_fitting_code import compute_layer_thickness
 from time import time
 
 mpl.rcParams['figure.dpi'] = 300

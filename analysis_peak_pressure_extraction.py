@@ -128,10 +128,10 @@ hv.render(table, backend="matplotlib") # plot data
 
 #%%
 
-groups = [chr(65+g) for g in np.random.randint(0, 3, 200)]
-boxwhisker = hv.BoxWhisker((groups, np.random.randint(0, 5, 200), np.random.randn(200)),
-              ['Group', 'Category'], 'Value').sort()
-boxwhisker.opts(
-    opts.BoxWhisker(box_color='white', height=400, show_legend=False, whisker_color='gray', width=600))
+# groups = [chr(65+g) for g in np.random.randint(0, 3, 200)]
+# boxwhisker = hv.BoxWhisker((groups, np.random.randint(0, 5, 200), np.random.randn(200)),
+#               ['Group', 'Category'], 'Value').sort()
+# boxwhisker.opts(
+#     opts.BoxWhisker(box_color='white', height=400, show_legend=False, whisker_color='gray', width=600))
     
 
