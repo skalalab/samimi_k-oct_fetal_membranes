@@ -206,22 +206,28 @@ import holoviews as hv
 from holoviews import opts
 hv.extension("bokeh")
 
-path_figures = Path(r"C:/Users/econtrerasguzman/Desktop/development/fetal_membrane_kayvan/stress_tension_strain code/figures")
+path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")
 
 df_loaded_tension_greater_than_toe = df[df["loaded_tension"] > df["toe_tension"]]
 
+
 df_funky = df[df["loaded_tension"] < df["toe_tension"]]
+
+## export intermediates
+df_funky.to_csv(path_figures / "tensions_toe_geater_than_loaded.csv")
+df.to_csv(path_figures / "tensions_all.csv")
+
 
 kdims = [("term","Pregnancy Term"),
          ("location", "Location")
          ] 
 vdims = [("toe_tension","Toe Tension Modulus")]
 boxwhisker_toe = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
-boxwhisker_toe.opts(title="Toe Region", tool=["hover"])
+boxwhisker_toe.opts(title="Toe Region", tools=["hover"])
 
 vdims = [("loaded_tension","Loaded Tension Modulus")]
 boxwhisker_loaded = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
-boxwhisker_loaded.opts(title="Loaded Region", tool=["hover"])
+boxwhisker_loaded.opts(title="Loaded Region", tools=["hover"])
 
 layout = boxwhisker_toe + boxwhisker_loaded
 layout.opts(
@@ -229,7 +235,7 @@ layout.opts(
     )
 # boxwhisker.opts(width=800, height=800)
 
-hv.save(layout, path_figures / "tension_modulus_boxwhisker_plots.html")
+hv.save(layout, path_figures / "tensions_toe_loaded_boxwhisker_plots.html")
 
 # boxwhisker_location = hv.BoxWhisker(df_loaded_tension_greater_than_toe,
 #                                     kdims=("location","Location"),

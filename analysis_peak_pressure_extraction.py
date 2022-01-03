@@ -84,47 +84,51 @@ for path_sample in tqdm(list_path_sample_dirs):
         # POPULATE DATAFRAME
         data = {"sample": [sample], "subsample": [subsample_name], "location" : [location] , "layers": [layers], "pregnancy":pregnancy, "max_pressure": [max_pressure]}
         df = df.append(pd.DataFrame(data=data))
-    
+        
     # amniochorion and pericervical
     # list_path_amniochorion_pericervical = list(filter(re.compile("pericervical").search, list_path_amniochorion))[0]
-
+df.set_index("sample", drop=True)
 #%%
 import pandas as pd 
 import numpy as np
 import holoviews as hv 
 from holoviews import opts
 # hv.extension("bokeh")
-hv.extension("matplotlib")
+hv.extension("bokeh", "matplotlib")
 
 import matplotlib as mpl
 mpl.rcParams["figure.dpi"] =300
  
 #%% Amniochorion --> periplacental vs pericervical
 
+path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")
+
 #amniochorion 
 df = df.dropna() # if you don't do this it won't plot data
+
 boxwhisker = hv.BoxWhisker(df, ["location", "layers"], "max_pressure", label="Max Pressure kPa" )
-boxwhisker.opts(xrotation=90)
+boxwhisker.opts(xrotation=90, width=800, height=800)
 
-
+# display counts for each
 for layers in ["amnion", "amniochorion", "chorion"]:
     pass
     for loc in ["pericervical", "periplacental"]:
         pass
-
-        # 
         df_loc = df[df["location"]== loc]
         df_loc_layer = df_loc[df_loc["layers"] == layers]
         print(f"{loc} | {layers}  : {len(df_loc_layer)}")
 
+# export 
+df.to_csv(path_figures / "apex_rise_pressures.csv")
+hv.save(boxwhisker, path_figures / "apex_rise_pressures.html")
 #%%
-hv.render(boxwhisker, backend="matplotlib") # plot data
+# hv.render(boxwhisker, backend="matplotlib") # plot data
 
 #%%
 
 
 table = hv.Table(boxwhisker)
-hv.render(table, backend="matplotlib") # plot data
+# hv.render(table, backend="matplotlib") # plot data
 
 #%%
 
