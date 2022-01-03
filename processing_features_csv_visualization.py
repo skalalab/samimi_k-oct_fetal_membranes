@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 28 12:56:41 2021
-
-@author: admin2
-"""
-
 from pathlib import Path
 import pandas as pd
 import matplotlib.pylab as plt

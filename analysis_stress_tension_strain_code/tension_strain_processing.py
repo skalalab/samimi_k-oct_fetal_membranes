@@ -63,6 +63,7 @@ for pos, path_csv in enumerate(list_path_features_csv[:]):
         plt.ylabel("Pressure [kPa]")
         plt.show()
         continue
+    
     idx_loaded = get_region_indices(df_pressure_apex["Pressure"].values,
                                  thresh_loaded_low,
                                  thresh_loaded_high)
@@ -201,7 +202,6 @@ for pos, path_csv in enumerate(list_path_features_csv[:]):
 df = pd.DataFrame(dict_tension_modulus).transpose()
 df.index.name = "sample_name"
 
-
 import holoviews as hv
 from holoviews import opts
 hv.extension("bokeh")
@@ -210,13 +210,11 @@ path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")
 
 df_loaded_tension_greater_than_toe = df[df["loaded_tension"] > df["toe_tension"]]
 
-
 df_funky = df[df["loaded_tension"] < df["toe_tension"]]
 
 ## export intermediates
-df_funky.to_csv(path_figures / "tensions_toe_geater_than_loaded.csv")
-df.to_csv(path_figures / "tensions_all.csv")
-
+df_funky.to_csv(path_figures / f"tensions_toe_geater_than_loaded.csv")
+df.to_csv(path_figures / f"tensions_all.csv")
 
 kdims = [("term","Pregnancy Term"),
          ("location", "Location")
@@ -224,43 +222,16 @@ kdims = [("term","Pregnancy Term"),
 vdims = [("toe_tension","Toe Tension Modulus")]
 boxwhisker_toe = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
 boxwhisker_toe.opts(title="Toe Region", tools=["hover"])
+# violin_toe = hv.Violin(df_loaded_tension_greater_than_toe, kdims, vdims)
+# plots_toe = boxwhisker_toe * violin_toe
 
 vdims = [("loaded_tension","Loaded Tension Modulus")]
-boxwhisker_loaded = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
+boxwhisker_loaded = hv.BoxWhisker(df_loaded_tension_greater_than_toe, kdims, vdims)
 boxwhisker_loaded.opts(title="Loaded Region", tools=["hover"])
 
 layout = boxwhisker_toe + boxwhisker_loaded
 layout.opts(
     opts.BoxWhisker(width=800, height=800)
     )
-# boxwhisker.opts(width=800, height=800)
 
 hv.save(layout, path_figures / "tensions_toe_loaded_boxwhisker_plots.html")
-
-# boxwhisker_location = hv.BoxWhisker(df_loaded_tension_greater_than_toe,
-#                                     kdims=("location","Location"),
-#                                     vdims=("toe_tension", "Toe Tension"))
-# boxwhisker_location.opts(width=800, height=800)
-# hv.save(boxwhisker_location, path_figures / "location_tension_modulus_boxwhisker_plots.html")
-
-
-# if __name__ == "__main__":
-    
-#     from pathlib import Path
-#     import pandas as pd
-#     import matplotlib.pylab as plt
-#     import numpy as np
-#     from numpy.linalg import lstsq
-#     import matplotlib as mpl
-#     mpl.rcParams["figure.dpi"] = 300
-
-
-#     path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
-                    
-#     list_path_features_csv = list(path_dataset.rglob("*amniochorion*features.csv"))
-
-#     for path_csv in list_path_features_csv[:2]:
-#         df = pd.read_csv(path_csv)
-#         df = df.dropna()
-#         df_pressure_apex = df[["frame_number","Apex Rise", "Pressure"]]
-    

@@ -12,16 +12,6 @@ list_path_sample_dirs = [p for p in list_path_files if p.is_dir()]
 
 list_str_path_sample_dirs = [str(p) for p in list_path_sample_dirs]
 
-# #split into labored/unlabored(c section)
-# list_labored = []
-# list_unlabored = []
-
-# for path_str_subsample in list_str_path_sample_dirs:
-#     pass
-#     if "_C_section" in path_str_subsample:
-#         list_unlabored.append(path_str_subsample)
-#     else:
-#         list_labored.append(path_str_subsample)
 
 #%%
 
@@ -87,7 +77,9 @@ for path_sample in tqdm(list_path_sample_dirs):
         
     # amniochorion and pericervical
     # list_path_amniochorion_pericervical = list(filter(re.compile("pericervical").search, list_path_amniochorion))[0]
-df.set_index("sample", drop=True)
+
+# set index to sample and drop index
+df = df.set_index("sample", drop=True)
 #%%
 import pandas as pd 
 import numpy as np
@@ -120,15 +112,17 @@ for layers in ["amnion", "amniochorion", "chorion"]:
 
 # export 
 df.to_csv(path_figures / "apex_rise_pressures.csv")
-hv.save(boxwhisker, path_figures / "apex_rise_pressures.html")
+hv.save(boxwhisker, path_figures / "apex_rise_pressures_boxwhisker.html")
 #%%
 # hv.render(boxwhisker, backend="matplotlib") # plot data
 
 #%%
 
 
-table = hv.Table(boxwhisker)
-# hv.render(table, backend="matplotlib") # plot data
+# table = hv.Table(boxwhisker)
+# table.opts(width=800, height=800)
+# hv.save(table, path_figures / "apex_rise_pressures_table.html")
+# # hv.render(table, backend="matplotlib") # plot data
 
 #%%
 
