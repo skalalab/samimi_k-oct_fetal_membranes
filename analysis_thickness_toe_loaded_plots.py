@@ -12,8 +12,8 @@ path_dataset_soft_tissue_lab = Path(r"Z:\0-Projects and Experiments\KS - OCT mem
 list_feature_csv_files = list(path_dataset_soft_tissue_lab.rglob("*features.csv"))
 #%%
 
-dict_dataset = {}
 
+dict_dataset = {}
 for pos, file_path in enumerate(list_feature_csv_files):
     pass
     df = pd.read_csv(file_path)
@@ -50,9 +50,17 @@ for pos, file_path in enumerate(list_feature_csv_files):
     # loaded region range 
     thresh_loaded_low = 7.5
     thresh_loaded_high = np.max(df["Pressure"].values) # or 17.8
+    
+        
+    if thresh_loaded_high < thresh_loaded_low:
+        print(f"Error Loaded region: range error. lower boundary greater than upper boundary")
+        print(f"{file_path}")
+        continue
+    
     idx_loaded = get_region_indices(df["Pressure"].values,
                                  thresh_loaded_low,
                                  thresh_loaded_high)
+
     
     ## visualize regions 
     # plot regions
@@ -71,7 +79,6 @@ for pos, file_path in enumerate(list_feature_csv_files):
     plt.ylabel("Pressure [kPa]")
     plt.show()
     
-
 
     # initialize dict
     sample_name = file_path.stem
@@ -112,6 +119,8 @@ for pos, file_path in enumerate(list_feature_csv_files):
         dict_dataset[sample_name]["layers"] = "chorion"
     else: dict_dataset[sample_name]["layers"] = np.NaN
     
-    
+# convert to dataframe
+# plot 
+# save 
     
         
