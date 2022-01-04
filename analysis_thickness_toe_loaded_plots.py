@@ -120,6 +120,7 @@ for pos, file_path in enumerate(list_feature_csv_files):
     else: dict_dataset[sample_name]["layers"] = np.NaN
     
 # convert to dataframe
+df = pd.DataFrame(dict_dataset).transpose()
 # plot 
 # save 
     
