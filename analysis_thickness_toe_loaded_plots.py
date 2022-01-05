@@ -40,7 +40,7 @@ for dict_params in list_combinations: #iterate through parameters
         df = df.dropna() # drop NA values
         
         ### add column of combined thicknesses 
-        df["amnion_spongy_chorion-area"] = df["amnion-area"] + df["spongy-area"] + df["chorion-area"]
+        df["amnion_spongy_chorion-thickness"] = df["amnion-thickness"] + df["spongy-thickness"] + df["chorion-thickness"]
             
         # get indices from pressure array 
         def get_region_indices(data, val_lower, val_upper):
@@ -143,17 +143,17 @@ for dict_params in list_combinations: #iterate through parameters
     
         ### COMPUTE AVEARAGE THICKNESS AT RANGES
         ## toe thickness    
-        dict_dataset[sample_name]["avg_amnion_toe_thickness"] = np.mean(df["amnion-area"][idx_toe[0]:idx_toe[1]])
-        dict_dataset[sample_name]["avg_spongy_toe_thickness"] = np.mean(df["spongy-area"][idx_toe[0]:idx_toe[1]])
-        dict_dataset[sample_name]["avg_chorion_toe_thickness"] = np.mean(df["chorion-area"][idx_toe[0]:idx_toe[1]])
-        dict_dataset[sample_name]["avg_amnion_spongy_chorion_toe_thickness"] = np.mean(df["amnion_spongy_chorion-area"][idx_toe[0]:idx_toe[1]])
+        dict_dataset[sample_name]["avg_amnion_toe_thickness"] = np.mean(df["amnion-thickness"][idx_toe[0]:idx_toe[1]])
+        dict_dataset[sample_name]["avg_spongy_toe_thickness"] = np.mean(df["spongy-thickness"][idx_toe[0]:idx_toe[1]])
+        dict_dataset[sample_name]["avg_chorion_toe_thickness"] = np.mean(df["chorion-thickness"][idx_toe[0]:idx_toe[1]])
+        dict_dataset[sample_name]["avg_amnion_spongy_chorion_toe_thickness"] = np.mean(df["amnion_spongy_chorion-thickness"][idx_toe[0]:idx_toe[1]])
     
     
         ## loaded thicknesses
-        dict_dataset[sample_name]["avg_amnion_loaded_thickness"] = np.mean(df["amnion-area"][idx_loaded[0]:idx_loaded[1]])
-        dict_dataset[sample_name]["avg_spongy_loaded_thickness"] = np.mean(df["spongy-area"][idx_loaded[0]:idx_loaded[1]])
-        dict_dataset[sample_name]["avg_chorion_loaded_thickness"] = np.mean(df["chorion-area"][idx_loaded[0]:idx_loaded[1]])
-        dict_dataset[sample_name]["avg_amnion_spongy_chorion_loaded_thickness"] = np.mean(df["amnion_spongy_chorion-area"][idx_loaded[0]:idx_loaded[1]])
+        dict_dataset[sample_name]["avg_amnion_loaded_thickness"] = np.mean(df["amnion-thickness"][idx_loaded[0]:idx_loaded[1]])
+        dict_dataset[sample_name]["avg_spongy_loaded_thickness"] = np.mean(df["spongy-thickness"][idx_loaded[0]:idx_loaded[1]])
+        dict_dataset[sample_name]["avg_chorion_loaded_thickness"] = np.mean(df["chorion-thickness"][idx_loaded[0]:idx_loaded[1]])
+        dict_dataset[sample_name]["avg_amnion_spongy_chorion_loaded_thickness"] = np.mean(df["amnion_spongy_chorion-thickness"][idx_loaded[0]:idx_loaded[1]])
     
         
         ### DETERMINE OTHER PARAMETERS 
