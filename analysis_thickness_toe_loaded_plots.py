@@ -6,6 +6,10 @@ mpl.rcParams["figure.dpi"] = 300
 import numpy as np
 from sklearn.model_selection import ParameterGrid
 from pprint import pprint
+# plot
+import holoviews as hv
+hv.extension("bokeh")
+from holoviews import opts
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 
@@ -22,11 +26,15 @@ dict_params = {
 
 list_combinations = list(ParameterGrid(dict_params))
 
-for dict_params in list_combinations: #iterate through the ranges 
-    pass
 
+
+for dict_params in list_combinations: #iterate through parameters
+    pass
+    
+    holoviews_apex_pressure = None
+    overview_holoviews_apex_pressure = None
     dict_dataset = {}
-    for pos, file_path in enumerate(list_feature_csv_files): # iterate through the feature csv files
+    for pos, file_path in enumerate(list_feature_csv_files): # for each parameter, iterate through the feature csv files
         pass
         df = pd.read_csv(file_path)
         df = df.dropna() # drop NA values
@@ -49,7 +57,7 @@ for dict_params in list_combinations: #iterate through the ranges
             if idx_upper.size == 0: # no values larger than upper, find idx of max value 
                 idx_upper = np.argwhere(data == data.max()).squeeze()
             
-            #get firstvalue
+            #get first value
             idx_upper = idx_upper[0] if idx_upper.ndim > 0 else int(idx_upper) # get first value
                 
             return idx_lower, idx_upper
@@ -83,22 +91,43 @@ for dict_params in list_combinations: #iterate through the ranges
             continue
 
         
-        ## visualize regions 
-        # plot regions
-        plt.title(f"Apex Rise vs Pressure \n {pos} | {file_path.stem}")
-        plt.plot(df["Apex Rise"],df["Pressure"])
-        #toe region
-        plt.plot(df["Apex Rise"][idx_toe[0]:idx_toe[1]], 
-                  df["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region",
-                  )
-        # loaded region
-        plt.plot(df["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
-                  df["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region",
-                  )
-        plt.legend()
-        plt.xlabel("Apex Rise [mm]")
-        plt.ylabel("Pressure [kPa]")
-        plt.show()
+        # ## visualize regions 
+        # # plot regions
+        # plt.title(f"Apex Rise vs Pressure \n {pos} | {file_path.stem}")
+        # plt.plot(df["Apex Rise"],df["Pressure"])
+        # #toe region
+        # plt.plot(df["Apex Rise"][idx_toe[0]:idx_toe[1]], 
+        #           df["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region",
+        #           )
+        # # loaded region
+        # plt.plot(df["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
+        #           df["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region",
+        #           )
+        # plt.legend()
+        # plt.xlabel("Apex Rise [mm]")
+        # plt.ylabel("Pressure [kPa]")
+        # plt.show()
+        
+        ## holoviews overlay object
+        hv_apex_rise_pressure = hv.Scatter((df["Apex Rise"], df["Pressure"]),
+                                           kdims=["Pressure"], 
+                                           vdims=["Apex Rise"], 
+                                           label="Apex Rise vs Pressure")
+        holoviews_toe = hv.Scatter((df["Apex Rise"][idx_toe[0]:idx_toe[1]], df["Pressure"][idx_toe[0]:idx_toe[1]]), 
+                                   kdims=["Pressure"], 
+                                   vdims=["Apex Rise"],
+                                   label=f"Toe | Range {thresh_toe_low} to {thresh_toe_high}")
+        holoviews_loaded = hv.Scatter((df["Apex Rise"][idx_loaded[0]:idx_loaded[1]], df["Pressure"][idx_loaded[0]:idx_loaded[1]]),
+                                      kdims=["Pressure"],
+                                      vdims=["Apex Rise"],
+                                      label= f"loaded | Range {thresh_loaded_low} to {thresh_loaded_high} ")
+        
+        holoviews_apex_pressure = hv_apex_rise_pressure * holoviews_toe * holoviews_loaded
+        
+        if overview_holoviews_apex_pressure is None:
+            overview_holoviews_apex_pressure = holoviews_apex_pressure
+        else:
+            overview_holoviews_apex_pressure *= holoviews_apex_pressure
         
     
         # initialize dict
@@ -110,9 +139,9 @@ for dict_params in list_combinations: #iterate through the ranges
         dict_dataset[sample_name]["threshold_toe_high"] = thresh_toe_high
         
         dict_dataset[sample_name]["threshold_loaded_low"] = thresh_loaded_low
-        dict_dataset[sample_name]["threshold_loaded_high"] = thresh_loaded_high
+        dict_dataset[sample_name]["threshold_loaded_high"] = dict_params["loaded_upper_bound"]
     
-        ### GET AVERAGE THICKNESSES
+        ### COMPUTE AVEARAGE THICKNESS AT RANGES
         ## toe thickness    
         dict_dataset[sample_name]["avg_amnion_toe_thickness"] = np.mean(df["amnion-area"][idx_toe[0]:idx_toe[1]])
         dict_dataset[sample_name]["avg_spongy_toe_thickness"] = np.mean(df["spongy-area"][idx_toe[0]:idx_toe[1]])
@@ -146,61 +175,44 @@ for dict_params in list_combinations: #iterate through the ranges
             dict_dataset[sample_name]["layers"] = "chorion"
         else: dict_dataset[sample_name]["layers"] = np.NaN
         
-
 #%%
     # convert to dataframe
-    df = pd.DataFrame(dict_dataset).transpose()
+    df_thick = pd.DataFrame(dict_dataset).transpose()
     
-    df = df.dropna()
-    # plot
-    import holoviews as hv
-    hv.extension("bokeh", "matplotlib")
+    df_thick = df_thick.dropna()
+
     
     path_output = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\thickness_toe_loaded")
     
     # toe
     kdims = [("term", "Term"),("location","Location")]
-    vdims = [("avg_amnion_toe_thickness","Thickness (px)")]
-    
-    violin_toe_amnion = hv.BoxWhisker(df, kdims , vdims, label="Average Amnion Toe Thicknesses")
-    
-    
-    str_loaded_range = f"{df['threshold_loaded_low'][0]}_to_{df['threshold_loaded_high'][0]}"
-    hv.save(violin_toe_amnion, path_output / f"test_{str_loaded_range}.html")
-    
+   
+    bw_toe_amnion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_toe_thickness","Avg Thickness (px)")], label="Amnion Toe")
+    bw_toe_spongy = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_spongy_toe_thickness","Avg Thickness (px)")], label="Spongy Toe")
+    bw_toe_chorion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_chorion_toe_thickness","Avg Thickness (px)")], label="Chorion Toe")
+    bw_toe_combined = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_spongy_chorion_toe_thickness","Avg Thickness (px)")], label="Amion,Spongy,Chorion Toe")
+
+
+    layout_toe = holoviews_apex_pressure + bw_toe_amnion + bw_toe_spongy + bw_toe_chorion + bw_toe_combined
+
+    # LOADED 
+    bw_loaded_amnion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_loaded_thickness","Avg Thickness (px)")], label="Amnion Loaded")
+    bw_loaded_spongy = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_spongy_loaded_thickness","Avg Thickness (px)")], label="Spongy Loaded")
+    bw_loaded_chorion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_chorion_loaded_thickness","Avg Thickness (px)")], label="Chorion Loaded")
+    bw_loaded_combined = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_spongy_chorion_loaded_thickness","Avg Thickness (px)")], label="Amnion,Spongy,Chorion Loaded")
+
+    layout_loaded =  overview_holoviews_apex_pressure + bw_loaded_amnion + bw_loaded_spongy + bw_loaded_chorion + bw_loaded_combined
     
     #global options
-    opts(
-        opts.BoxWhisker(width=800, height=800)
-    )
+    overlay = layout_toe + layout_loaded
+    overlay.opts(        
+        opts.BoxWhisker(width=500, height=500, tools=["hover"], legend_position='right'),
+        opts.Scatter(width=500, height=500, tools=["hover"], legend_position='top_left', alpha=1),
+    ).cols(5)
     
+
+    str_loaded_range = f"{df_thick['threshold_loaded_low'][0]}_to_{df_thick['threshold_loaded_high'][0]}"
+    hv.save(overlay, path_output / f"thickness_loaded_range_{str_loaded_range}.html")
+    df_thick.to_csv(path_output / f"thickness_loaded_range_{str_loaded_range}.csv")
     
-    
-    # loaded 
-    
-    'avg_amnion_loaded_thickness',
-    'avg_amnion_toe_thickness',
-    'avg_chorion_loaded_thickness',
-    'avg_chorion_toe_thickness',
-    'avg_spongy_loaded_thickness',
-    'avg_spongy_toe_thickness',
-    
-    'avg_amnion_spongy_chorion_loaded_thickness',
-    'avg_amnion_spongy_chorion_toe_thickness',
-    
-    #4x2 
-    ### toe loaded 
-    # Thicknesses
-        # chorion
-        # spongy
-        # amnion 
-        # combined
-    
-    
-    amnion toe thickness
-    #location
-    #term
-    
-    # save 
-        
         
