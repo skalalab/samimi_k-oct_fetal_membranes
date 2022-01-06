@@ -27,7 +27,6 @@ dict_params = {
 list_combinations = list(ParameterGrid(dict_params))
 
 
-
 for dict_params in list_combinations: #iterate through parameters
     pass
     
@@ -78,6 +77,8 @@ for dict_params in list_combinations: #iterate through parameters
         else:
             thresh_loaded_high = dict_params["loaded_upper_bound"]
             
+            
+            
         if thresh_loaded_high < thresh_loaded_low:
             print("Error Loaded region: range error. lower boundary greater than upper boundary")
             print(f"{file_path}")
@@ -109,25 +110,29 @@ for dict_params in list_combinations: #iterate through parameters
         # plt.show()
         
         ## holoviews overlay object
+        kdims = ["Apex Rise"]
+        vdims = ["Pressure"]
         hv_apex_rise_pressure = hv.Scatter((df["Apex Rise"], df["Pressure"]),
-                                           kdims=["Pressure"], 
-                                           vdims=["Apex Rise"], 
+                                           kdims=kdims, vdims=vdims,
                                            label="Apex Rise vs Pressure")
+        hv_apex_rise_pressure.opts(color="g")
         holoviews_toe = hv.Scatter((df["Apex Rise"][idx_toe[0]:idx_toe[1]], df["Pressure"][idx_toe[0]:idx_toe[1]]), 
-                                   kdims=["Pressure"], 
-                                   vdims=["Apex Rise"],
+                                   kdims=kdims, vdims=vdims, 
                                    label=f"Toe | Range {thresh_toe_low} to {thresh_toe_high}")
+        holoviews_toe.opts(color="b")
         holoviews_loaded = hv.Scatter((df["Apex Rise"][idx_loaded[0]:idx_loaded[1]], df["Pressure"][idx_loaded[0]:idx_loaded[1]]),
-                                      kdims=["Pressure"],
-                                      vdims=["Apex Rise"],
+                                     kdims=kdims, vdims=vdims, 
                                       label= f"loaded | Range {thresh_loaded_low} to {thresh_loaded_high} ")
+        holoviews_loaded.opts(color="r")
         
         holoviews_apex_pressure = hv_apex_rise_pressure * holoviews_toe * holoviews_loaded
         
         if overview_holoviews_apex_pressure is None:
             overview_holoviews_apex_pressure = holoviews_apex_pressure
         else:
+            # overview_holoviews_apex_pressure *= holoviews_apex_pressure
             overview_holoviews_apex_pressure *= holoviews_apex_pressure
+
         
     
         # initialize dict
@@ -146,6 +151,7 @@ for dict_params in list_combinations: #iterate through parameters
         dict_dataset[sample_name]["avg_amnion_toe_thickness"] = np.mean(df["amnion-thickness"][idx_toe[0]:idx_toe[1]])
         dict_dataset[sample_name]["avg_spongy_toe_thickness"] = np.mean(df["spongy-thickness"][idx_toe[0]:idx_toe[1]])
         dict_dataset[sample_name]["avg_chorion_toe_thickness"] = np.mean(df["chorion-thickness"][idx_toe[0]:idx_toe[1]])
+        dict_dataset[sample_name]["avg_decidua_toe_thickness"] = np.mean(df["decidua-thickness"][idx_toe[0]:idx_toe[1]])
         dict_dataset[sample_name]["avg_amnion_spongy_chorion_toe_thickness"] = np.mean(df["amnion_spongy_chorion-thickness"][idx_toe[0]:idx_toe[1]])
     
     
@@ -153,6 +159,7 @@ for dict_params in list_combinations: #iterate through parameters
         dict_dataset[sample_name]["avg_amnion_loaded_thickness"] = np.mean(df["amnion-thickness"][idx_loaded[0]:idx_loaded[1]])
         dict_dataset[sample_name]["avg_spongy_loaded_thickness"] = np.mean(df["spongy-thickness"][idx_loaded[0]:idx_loaded[1]])
         dict_dataset[sample_name]["avg_chorion_loaded_thickness"] = np.mean(df["chorion-thickness"][idx_loaded[0]:idx_loaded[1]])
+        dict_dataset[sample_name]["avg_decidua_loaded_thickness"] = np.mean(df["decidua-thickness"][idx_loaded[0]:idx_loaded[1]])
         dict_dataset[sample_name]["avg_amnion_spongy_chorion_loaded_thickness"] = np.mean(df["amnion_spongy_chorion-thickness"][idx_loaded[0]:idx_loaded[1]])
     
         
@@ -182,7 +189,7 @@ for dict_params in list_combinations: #iterate through parameters
     df_thick = df_thick.dropna()
 
     
-    path_output = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\thickness_toe_loaded")
+    path_output = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\temp") # thickness_toe_loaded
     
     # toe
     kdims = [("term", "Term"),("location","Location")]
@@ -190,25 +197,27 @@ for dict_params in list_combinations: #iterate through parameters
     bw_toe_amnion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_toe_thickness","Avg Thickness (px)")], label="Amnion Toe")
     bw_toe_spongy = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_spongy_toe_thickness","Avg Thickness (px)")], label="Spongy Toe")
     bw_toe_chorion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_chorion_toe_thickness","Avg Thickness (px)")], label="Chorion Toe")
+    bw_toe_decidua = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_decidua_toe_thickness","Avg Thickness (px)")], label="Decidua Toe")
     bw_toe_combined = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_spongy_chorion_toe_thickness","Avg Thickness (px)")], label="Amion,Spongy,Chorion Toe")
 
 
-    layout_toe = holoviews_apex_pressure + bw_toe_amnion + bw_toe_spongy + bw_toe_chorion + bw_toe_combined
+    layout_toe = holoviews_apex_pressure + bw_toe_amnion + bw_toe_spongy + bw_toe_chorion + bw_toe_decidua+  bw_toe_combined
 
     # LOADED 
     bw_loaded_amnion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_loaded_thickness","Avg Thickness (px)")], label="Amnion Loaded")
     bw_loaded_spongy = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_spongy_loaded_thickness","Avg Thickness (px)")], label="Spongy Loaded")
     bw_loaded_chorion = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_chorion_loaded_thickness","Avg Thickness (px)")], label="Chorion Loaded")
+    bw_loaded_decidua = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_decidua_loaded_thickness","Avg Thickness (px)")], label="Decidua Loaded")
     bw_loaded_combined = hv.BoxWhisker(df_thick, kdims , vdims=[("avg_amnion_spongy_chorion_loaded_thickness","Avg Thickness (px)")], label="Amnion,Spongy,Chorion Loaded")
 
-    layout_loaded =  overview_holoviews_apex_pressure + bw_loaded_amnion + bw_loaded_spongy + bw_loaded_chorion + bw_loaded_combined
+    layout_loaded =  overview_holoviews_apex_pressure + bw_loaded_amnion + bw_loaded_spongy + bw_loaded_chorion + bw_loaded_decidua + bw_loaded_combined
     
     #global options
     overlay = layout_toe + layout_loaded
     overlay.opts(        
         opts.BoxWhisker(width=500, height=500, tools=["hover"], legend_position='right'),
         opts.Scatter(width=500, height=500, tools=["hover"], legend_position='top_left', alpha=1),
-    ).cols(5)
+    ).cols(6)
     
 
     str_loaded_range = f"{df_thick['threshold_loaded_low'][0]}_to_{df_thick['threshold_loaded_high'][0]}"
