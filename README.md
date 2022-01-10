@@ -32,9 +32,9 @@ Once we have a trained model, the **processing_inference_on_images** script load
 
 These reporting scrips were created to track samples being processed. They mainly look for pressure files (__Pressure.txt_) and make sure there is a corresponding imgage file. it then looks for output files for each of the tasks: segmentation, apex_rise vs pressure calculation and features.csv file containing the combined datasets. 
 
-* **analysis_report_amniochorion** : Displays a list of all the samples left to process. Processing includes segmentation through ReLayNet, apex rise detection and pressure correlation. Additionally lines in this 
+* **processing_report_amniochorion** : Displays a list of all the samples left to process. Processing includes segmentation through ReLayNet, apex rise detection and pressure correlation. Additionally lines in this 
    
-* **analysis_report_amnion_chorion** : Displays a list of all the samples left to process. Similar to the file above but does not use ReLayNet for segmentation.
+* **processing_report_amnion_chorion** : Displays a list of all the samples left to process. Similar to the file above but does not use ReLayNet for segmentation.
 
 
 <hr>

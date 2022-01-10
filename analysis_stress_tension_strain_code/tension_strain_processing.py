@@ -117,21 +117,21 @@ for dict_params in list_combinations: #iterate through parameters
         else:
             overview_holoviews_apex_pressure *= holoviews_apex_pressure
         
-        ## plot regions
-        # plt.title(f"Apex Rise vs Pressure \n {pos} | {path_csv.stem}")
-        # plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"])
-        # #toe region
-        # plt.plot(df_pressure_apex["Apex Rise"][idx_toe[0]:idx_toe[1]], 
-        #          df_pressure_apex["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region",
-        #          )
-        # # loaded region
-        # plt.plot(df_pressure_apex["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
-        #          df_pressure_apex["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region",
-        #          )
-        # plt.legend()
-        # plt.xlabel("Apex Rise [mm]")
-        # plt.ylabel("Pressure [kPa]")
-        # plt.show()
+        # plot regions
+        plt.title(f"Apex Rise vs Pressure \n {pos} | {path_csv.stem}")
+        plt.plot(df_pressure_apex["Apex Rise"],df_pressure_apex["Pressure"])
+        #toe region
+        plt.plot(df_pressure_apex["Apex Rise"][idx_toe[0]:idx_toe[1]], 
+                  df_pressure_apex["Pressure"][idx_toe[0]:idx_toe[1]], label="toe region",
+                  )
+        # loaded region
+        plt.plot(df_pressure_apex["Apex Rise"][idx_loaded[0]:idx_loaded[1]],
+                  df_pressure_apex["Pressure"][idx_loaded[0]:idx_loaded[1]] , label="loaded region",
+                  )
+        plt.legend()
+        plt.xlabel("Apex Rise [mm]")
+        plt.ylabel("Pressure [kPa]")
+        plt.show()
         
         #%% Tension-Strain Analysis
         
@@ -284,8 +284,9 @@ for dict_params in list_combinations: #iterate through parameters
         ).cols(2)
     
     str_loaded_range = f"{loaded_low}_to_{loaded_high}"
-    hv.save(layout, path_output / f"tension_strain_range_{str_loaded_range}_loaded.html")
+    #hv.save(layout, path_output / f"tension_strain_range_{str_loaded_range}_loaded.html")
     df_tension_strain.to_csv(path_output / f"tension_strain_range_{str_loaded_range}.csv")
     if len(df_funky) > 0:
-        df_funky.to_csv(path_output / f"tension_strain_range_{str_loaded_range}_toe_greater_loaded.csv")
+        pass
+        #df_funky.to_csv(path_output / f"tension_strain_range_{str_loaded_range}_toe_greater_loaded.csv")
 
