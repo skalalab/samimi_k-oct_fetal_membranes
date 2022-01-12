@@ -59,14 +59,22 @@ for path_sample in tqdm(list_path_sample_dirs):
         
         
         # DETERMINE ROW ENTRIES 
+        # reset vars
+        location = ""
+        layers = ""
+        pregnancy = ""
+        
         # location
-        if "pericervical" in subsample_name: location = "pericervical"
-        elif "periplacental" in subsample_name: location = "periplacental"
+        print(subsample_name)
+        if "cervical" in subsample_name: location = "pericervical"
+        elif "placental" in subsample_name: location = "periplacental"
+        else: location = "not found"
         
         # layers
         if "amniochorion" in subsample_name: layers = "amniochorion"
         elif "amnion" in subsample_name: layers = "amnion"
         elif "chorion" in subsample_name: layers = "chorion"
+        else: layers = "not found"
         
         # labored/unlabored
         pregnancy = "C_section" if "C_section" in subsample_name else "labored"
@@ -111,7 +119,7 @@ for layers in ["amnion", "amniochorion", "chorion"]:
         print(f"{loc} | {layers}  : {len(df_loc_layer)}")
 
 # export 
-df.to_csv(path_figures / "apex_rise_pressures.csv")
+df.to_csv(path_figures / "apex_rise_pressures_fixed_loc.csv")
 hv.save(boxwhisker, path_figures / "apex_rise_pressures_boxwhisker.html")
 #%%
 # hv.render(boxwhisker, backend="matplotlib") # plot data

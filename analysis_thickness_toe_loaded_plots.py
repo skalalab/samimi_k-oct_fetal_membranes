@@ -167,11 +167,13 @@ for dict_params in list_combinations: #iterate through parameters
         # term    
         dict_dataset[sample_name]["term"] = "unlabored" if "C_section" in sample_name \
             else "labored"
+            
         # Location
-        if "pericervical" in sample_name:
+        if "cervical" in sample_name:
             dict_dataset[sample_name]["location"] = "pericervical"  
-        elif "periplacental" in sample_name:
+        elif "placental" in sample_name:
             dict_dataset[sample_name]["location"] = "periplacental" 
+        else: dict_dataset[sample_name]["location"] = np.NaN
         
         # layers (Amniochorion, amnion and chorion)
         if "amniochorion" in sample_name:
@@ -189,7 +191,7 @@ for dict_params in list_combinations: #iterate through parameters
     df_thick = df_thick.dropna()
 
     
-    path_output = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\temp") # thickness_toe_loaded
+    path_output = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\temp_thickness_fixed_loc") # thickness_toe_loaded
     
     # toe
     kdims = [("term", "Term"),("location","Location")]

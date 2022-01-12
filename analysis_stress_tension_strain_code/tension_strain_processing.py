@@ -154,8 +154,17 @@ for dict_params in list_combinations: #iterate through parameters
         radius = (apex**2 + device_radius**2) / (2 * apex)   # in [mm]  *****
         tension = (pressure * radius) / (2 * meters_to_mm);   # in [N/mm]
         strain = apex / radius # *****
+        
+        # save tension/strain values
+        # TODO update this 
+        path_features_all = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\features_all")
+        df["tension"] = tension[1:] # we inserted 1st value
+        df["strain"] = strain[1:] # we inserted 1st value
+        
+        df = df.set_index("frame_number", drop=True)
+        df.to_csv(path_features_all / f"{path_csv.stem}_all.csv")
+        
         #%%
-
         # y = mx + c==> y = Ap
         # A = [[x 1]] and p = [[m], [c]] 
         # https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html
