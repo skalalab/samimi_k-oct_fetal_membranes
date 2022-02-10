@@ -119,7 +119,7 @@ for layers in ["amnion", "amniochorion", "chorion"]:
         print(f"{loc} | {layers}  : {len(df_loc_layer)}")
 
 # export 
-df.to_csv(path_figures / "apex_rise_pressures_fixed_loc.csv")
+# df.to_csv(path_figures / "apex_rise_pressures_fixed_loc.csv")
 hv.save(boxwhisker, path_figures / "apex_rise_pressures_boxwhisker.html")
 #%%
 # hv.render(boxwhisker, backend="matplotlib") # plot data

@@ -1,6 +1,6 @@
-[fname, path] = uigetfile('*.txt', 'Load PRESSURE text file.');
+    [fname, path] = uigetfile('*.txt', 'Load PRESSURE text file.');
 P = importdata(cat(2,path,fname),';',0);
-press = P.data;
+press = P.data; 
 % pressure_interp = transpose(interp1 (1:size(press), press, linspace(1, size(press,1), size(apex_rise_metric,1))));
 
 figure, plot(apex_rise_metric)

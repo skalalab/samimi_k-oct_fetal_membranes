@@ -97,3 +97,8 @@ apex_rise_metric = apex_rise' * 2.65/size(multiframe_data_gray,1);
 
 figure(3), plot(apex_rise_metric)
 warning('on');
+
+%% Save [Apex Rise, Pressure] pairs to CSV file
+
+filename = strcat(fname(1:end-5), '_Apex_raw.csv'); % .tiff 5 letters 
+writematrix([apex_rise_metric], cat(2,path,filename));

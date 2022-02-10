@@ -1,5 +1,7 @@
 from pprint import pprint
 from pathlib import Path
+from PIL import Image
+
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 
@@ -10,7 +12,7 @@ list_subsample_dirs = [p for p in list_subsample_dirs if p.is_dir()]
 
 count_samples_to_process = 0
 count_total = 0
-for pos, dir_subsample in enumerate(list_subsample_dirs[:50]):
+for pos, dir_subsample in enumerate(list_subsample_dirs[:]):
     pass
     print(f"{pos})  {dir_subsample.stem}")
     # get pressure files
@@ -18,6 +20,7 @@ for pos, dir_subsample in enumerate(list_subsample_dirs[:50]):
     list_layers = ["amnion", "chorion"]
     # layer = "amnion"
     for layer in list_layers:
+        pass
         list_path_pressure_files = list(dir_subsample.rglob(f"*_{layer}_*.txt")) + \
                                         list(dir_subsample.rglob(f"_{layer}_*Mode2D*.txt"))
         
@@ -37,6 +40,8 @@ for pos, dir_subsample in enumerate(list_subsample_dirs[:50]):
             if not path_im.exists():
                 continue
 
+           
+
             # valid sample to process
             count_total += 1
             
@@ -50,6 +55,22 @@ for pos, dir_subsample in enumerate(list_subsample_dirs[:50]):
             if bool_apex_rise_file_exists:
 
                 print(f"{' ' * 8} [x] {layer} | {path_pressure.parent.stem}")
+            elif (path_im.parent / "reg.txt").exists() : ## registration problem
+                print(f"{' ' * 8} [ - ] {layer} | {path_pressure.parent.stem} | registration_error")
+            
+            elif (path_im.parent / "flip.txt").exists() : ## registration problem
+                print(f"{' ' * 8} [ & ] {layer} | {path_pressure.parent.stem} | flipped frames")
+            
+            elif (path_im.parent / "rename.txt").exists() : ## registration problem
+                print(f"{' ' * 8} [ R ] {layer} | {path_pressure.parent.stem} | rename files")
+                 
+            elif (path_im.parent / "bad_press.txt").exists() : 
+                print(f"{' ' * 8} [ R ] {layer} | {path_pressure.parent.stem} | bad pressure file")
+            elif (path_im.parent / "fail.txt").exists() :
+                print(f"{' ' * 8} [ F ] {layer} | {path_pressure.parent.stem} | pressure file of failure")
+            elif (path_im.parent / "size_limit.txt").exists() :
+                print(f"{' ' * 8} [ F ] {layer} | {path_pressure.parent.stem} | file size limit reached, incomplete image stack")
+                         
             else:
                 count_samples_to_process += 1
                 print(f"{' ' * 8} [ ] {layer} | {path_pressure.parent.stem}")

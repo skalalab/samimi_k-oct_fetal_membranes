@@ -223,7 +223,7 @@ for dict_params in list_combinations: #iterate through parameters
     
 
     str_loaded_range = f"{df_thick['threshold_loaded_low'][0]}_to_{df_thick['threshold_loaded_high'][0]}"
-    hv.save(overlay, path_output / f"thickness_loaded_range_{str_loaded_range}.html")
-    df_thick.to_csv(path_output / f"thickness_loaded_range_{str_loaded_range}.csv")
+    # hv.save(overlay, path_output / f"thickness_loaded_range_{str_loaded_range}.html")
+    # df_thick.to_csv(path_output / f"thickness_loaded_range_{str_loaded_range}.csv")
     
         

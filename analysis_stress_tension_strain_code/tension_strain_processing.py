@@ -162,7 +162,7 @@ for dict_params in list_combinations: #iterate through parameters
         df["strain"] = strain[1:] # we inserted 1st value
         
         df = df.set_index("frame_number", drop=True)
-        df.to_csv(path_features_all / f"{path_csv.stem}_all.csv")
+        #df.to_csv(path_features_all / f"{path_csv.stem}_all.csv")
         
         #%%
         # y = mx + c==> y = Ap
@@ -294,7 +294,7 @@ for dict_params in list_combinations: #iterate through parameters
     
     str_loaded_range = f"{loaded_low}_to_{loaded_high}"
     #hv.save(layout, path_output / f"tension_strain_range_{str_loaded_range}_loaded.html")
-    df_tension_strain.to_csv(path_output / f"tension_strain_range_{str_loaded_range}.csv")
+    #df_tension_strain.to_csv(path_output / f"tension_strain_range_{str_loaded_range}.csv")
     if len(df_funky) > 0:
         pass
         #df_funky.to_csv(path_output / f"tension_strain_range_{str_loaded_range}_toe_greater_loaded.csv")
