@@ -14,9 +14,8 @@ from tqdm import tqdm
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
                 
 # list_path_features_csv = list(path_dataset.rglob("*amniochorion*features.csv"))
-list_path_features_csv = list(path_dataset.rglob("*features.csv"))
+list_path_features_csv = list(path_dataset.rglob("*_Pressure_Apex.csv"))
 #%%
-
 
 dict_params = {
     "loaded_lower_bound" : np.arange(7.5, 15.5, step=0.5),
@@ -42,9 +41,11 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
         pass
     
     
-        df = pd.read_csv(path_csv)
+        df = pd.read_csv(path_csv, names=["Apex Rise", "Pressure"])
+        df = df.reset_index()
+        df = df.rename(columns={"index":"frame_number"})
         df = df.dropna()
-        df_pressure_apex = df[["frame_number","Apex Rise", "Pressure"]]
+        df_pressure_apex = df
         
         #%% Extract indices for toe and loading region
         
@@ -267,7 +268,7 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
     
     #%%
     path_output = path_csv.parent
-    filename = path_csv.stem.rsplit("_", 1)[0]
+    filename = path_csv.stem.rsplit("_", 2)[0]
     
     df_tension_strain = pd.DataFrame(dict_tension_strain_modulus).transpose()
     df_tension_strain.index.name = "sample_name"
