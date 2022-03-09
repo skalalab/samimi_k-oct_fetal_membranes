@@ -36,7 +36,8 @@ for dir_sample in path_samples:
 
 #%% For each directory, find the folder with most items/images
 
-for dir_sample in tqdm(path_subset_samples):
+
+for dir_sample in tqdm(natsorted(list(path_subset_samples))):
     pass
     print(dir_sample.parent.parent.name)
 
@@ -45,7 +46,7 @@ for dir_sample in tqdm(path_subset_samples):
     
     path_dir_most_files = None
     
-    # iterate through subdirs
+    # FIGURE OUT WHICH SUBDIR HAS MOST FILES
     for path_subfolder in list_subfolders:
         pass
         # initialize subfolder 
@@ -55,10 +56,28 @@ for dir_sample in tqdm(path_subset_samples):
         # compare numbe of files
         elif len(list(path_subfolder.glob("*"))) > len(list(path_dir_most_files.glob("*"))):
             path_dir_most_files = path_subfolder
+    
+    
+    # no folders found in dir
+    # e.g Z:\Kayvan\Human Data\2018_11_20_term_labor_AROM_39w5d\2P\Placental
+    if path_dir_most_files is None:
+        continue
         
     # here we have dir with most files 
-    # print(f"most files dir:{path_dir_most_files} ")
-    list_images = list(path_dir_most_files.glob("*_Ch2_*"))
+    print(f"dir with most files:{path_dir_most_files} ")
+    
+    
+    # select data channel
+    # some sets are ch1 fluorescence ch2 SHG
+    # some sets are ch2 fluorescence ch3 SHG
+    
+    data_channel = "*_Ch2_*"
+    for file in list(path_dir_most_files.glob("*")):
+        if "_ch3_" in str(file).lower():
+            data_channel = "*_Ch3_*"
+
+    # grab all files with same channel
+    list_images = list(path_dir_most_files.glob(data_channel))
     
     # sorted nartually 
     list_images = natsorted(list_images)
@@ -80,7 +99,7 @@ for dir_sample in tqdm(path_subset_samples):
     filename = f"{path_subfolder.parent.parent.parent.name}_{location}.tiff"
     with tifffile.TiffWriter(path_output / filename, bigtiff=True) as tif:  # imagej=True
         for pos, path_im in enumerate(list_images):
-            print(f"saving:{pos}")
+            # print(f"saving:{pos}")
             im = tifffile.imread(path_im)
             tif.save(im.astype(np.uint16))
             
