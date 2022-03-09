@@ -17,7 +17,7 @@ dict_peak_pressures = {}
 ### keys
 
 # (pericervical,periplacental)
-df = pd.DataFrame(columns=["layers", "location", "pregnancy","max_pressure"]) # "sample", "subsample",
+# df = pd.DataFrame(columns=["layers", "location", "term","max_pressure"]) # "sample", "subsample",
 
 for path_sample in tqdm(list_path_sample_dirs[:]):
     pass
