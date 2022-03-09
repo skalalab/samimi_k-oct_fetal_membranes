@@ -11,10 +11,34 @@ import holoviews as hv
 hv.extension("bokeh")
 from holoviews import opts
 from tqdm import tqdm
+import re
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 
-list_feature_csv_files = list(path_dataset.rglob("*features.csv"))
+# list_feature_csv_files = list(path_dataset.rglob("*features.csv"))
+
+# find exports to merge into df
+list_pressure_csv_files = list(path_dataset.rglob("*_Pressure_Apex.csv"))
+list_thickness_csv_files = list(path_dataset.rglob("*_thickness.csv"))
+
+list_tuples_of_matching_files = []
+for path_pressure_file in list_pressure_csv_files:
+    pass
+    base_name = path_pressure_file.stem.rsplit("_",2)[0]
+    for path_thickness_file in list_thickness_csv_files:
+        pass
+        if f"{base_name}_thickness.csv" in str(path_thickness_file):
+            list_tuples_of_matching_files.append({
+                "path_pressure_csv" : path_pressure_file,
+                    "path_thickness_csv" : path_thickness_file
+                })
+
+# double check files match
+for d in list_tuples_of_matching_files:
+    pass
+    assert d['path_pressure_csv'].stem.split("_",2)[0] == \
+        d['path_thickness_csv'].stem.split("_", 1)[0], "pressure and thickness files don't match"
+
 #%%
 
 dict_params = { # iterate through (7.5-15) up to (max, 17.8)
@@ -29,8 +53,9 @@ list_combinations = list(ParameterGrid(dict_params))
     
 
 # iterate through every sample found
-for pos, file_path in tqdm(enumerate(list_feature_csv_files[:])): # for each parameter, iterate through the feature csv files
+for pos, dict_paths in tqdm(enumerate(list_tuples_of_matching_files[:])): # for each parameter, iterate through the feature csv files
     pass
+    file_path = dict_paths["path_pressure_csv"]
     print(file_path.stem)
 
     ## grid search
@@ -38,8 +63,32 @@ for pos, file_path in tqdm(enumerate(list_feature_csv_files[:])): # for each par
     for dict_params in list_combinations: #iterate through parameters
         pass
     
-        df = pd.read_csv(file_path)
+    
+        ## AGGREGATE PRESSURE AND THICKNESS FILES ON THE FLY
+        # _Pressure_Apex.csv and _thickness.csv
+        df_pressure = pd.read_csv(dict_paths["path_pressure_csv"], names=["Apex Rise","Pressure"])
+        df_thickness = pd.read_csv(dict_paths["path_thickness_csv"])
+        
+        ## if not same lengths
+        if not len(df_pressure) == len(df_thickness):
+            num_missing_rows= len(df_pressure) - len(df_thickness)
+            df_copy = df_thickness.copy()
+            
+            # create list of indices to match apex rise df
+            list_new_indices = np.arange(num_missing_rows) + len(df_thickness)
+            # print(df_copy.loc[len(df_copy.index)-1])
+            filler_row = ["NaN"] * len(df_thickness.columns) # create filler row matching number of cols 
+            for idx in list_new_indices: # fill indicex with filler row
+                df_copy.loc[idx] = filler_row
+            df_thickness = df_copy # replace df
+        
+        df = pd.concat([df_pressure, df_thickness], axis=1)
+        df.index = np.arange(1, len(df_thickness)+1)
+        df.index.names = ["frame_number"] 
+
         df = df.dropna() # drop NA values
+        
+        
         
         ### add column of combined thicknesses 
         df["amnion_spongy_chorion-thickness"] = df["amnion-thickness"] + df["spongy-thickness"] + df["chorion-thickness"]
@@ -189,7 +238,7 @@ for pos, file_path in tqdm(enumerate(list_feature_csv_files[:])): # for each par
         # SAVE DATAFRAME FOR SAMPLE
         #%%
     path_sample_output = file_path.parent
-    filename = file_path.stem.rsplit("_", 1)[0]
+    filename = file_path.stem.rsplit("_", 2)[0]
     df_thick = pd.DataFrame(dict_dataset).transpose()
     df_thick.to_csv(path_sample_output / f"{filename}_toe_loaded_thicknesses.csv")
         
