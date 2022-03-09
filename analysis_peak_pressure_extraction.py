@@ -1,5 +1,3 @@
-
-
 from pathlib import Path
 import re
 import pandas as pd
@@ -12,7 +10,6 @@ list_path_sample_dirs = [p for p in list_path_files if p.is_dir()]
 
 list_str_path_sample_dirs = [str(p) for p in list_path_sample_dirs]
 
-
 #%%
 
 dict_peak_pressures = {}
@@ -20,11 +17,11 @@ dict_peak_pressures = {}
 ### keys
 
 # (pericervical,periplacental)
-df = pd.DataFrame(columns=["sample", "subsample", "layers", "location", "pregnancy","max_pressure"])
+df = pd.DataFrame(columns=["layers", "location", "pregnancy","max_pressure"]) # "sample", "subsample",
 
-for path_sample in tqdm(list_path_sample_dirs):
+for path_sample in tqdm(list_path_sample_dirs[:]):
     pass
-    
+    # print(path_sample)
     sample = path_sample.stem
     
     path_subsample = path_sample / "Inflation"
@@ -45,11 +42,12 @@ for path_sample in tqdm(list_path_sample_dirs):
         list_early_2020_pressure_files = list(Path(subsample_dir).glob("*Mode2D.txt"))
         list_all_pressure_files = list_pressure_files + list_early_2020_pressure_files
         
+        # merge all pressure files into a single df
         df_subsample_pressures = pd.DataFrame(columns=["date", "pressure"])
         for file_pressure in list_all_pressure_files:
             pass
             df_temp = pd.read_csv(file_pressure,delimiter=";", names=["date", "pressure"])
-            df_subsample_pressures = df_subsample_pressures.append(df_temp)
+            df_subsample_pressures = pd.concat([df_subsample_pressures, df_temp])
         
         # variables 
         max_pressure = df_subsample_pressures["pressure"].max()
@@ -77,67 +75,56 @@ for path_sample in tqdm(list_path_sample_dirs):
         else: layers = "not found"
         
         # labored/unlabored
-        pregnancy = "C_section" if "C_section" in subsample_name else "labored"
+        term = "unlabored" if "C_section" in subsample_name else "labored"
         
-        # POPULATE DATAFRAME
-        data = {"sample": [sample], "subsample": [subsample_name], "location" : [location] , "layers": [layers], "pregnancy":pregnancy, "max_pressure": [max_pressure]}
-        df = df.append(pd.DataFrame(data=data))
+        # POPULATE DATAFRAME for sample
+        # "sample": [sample], "subsample": [subsample_name],
+        data = { "location" : [location] , "layers": [layers], "term":term, "max_pressure": [max_pressure]}
+        df = pd.DataFrame(data=data)
+        # df = df.set_index("sample", drop=True)
+        
+        df = df.reset_index(drop=True)
+        path_sample_output = Path(subsample_dir)
+        df.to_csv(path_sample_output / f"{Path(path_sample_output).stem}_max_pressure.csv")
+
+        
+        # this saves it all into a single summary df
+        # df = df.append(pd.DataFrame(data=data))
         
     # amniochorion and pericervical
     # list_path_amniochorion_pericervical = list(filter(re.compile("pericervical").search, list_path_amniochorion))[0]
 
 # set index to sample and drop index
-df = df.set_index("sample", drop=True)
+# df = df.set_index("sample", drop=True)
 #%%
-import pandas as pd 
-import numpy as np
-import holoviews as hv 
-from holoviews import opts
-# hv.extension("bokeh")
-hv.extension("bokeh", "matplotlib")
+# import pandas as pd 
+# import numpy as np
+# import holoviews as hv 
+# from holoviews import opts
+# # hv.extension("bokeh")
+# hv.extension("bokeh", "matplotlib")
 
-import matplotlib as mpl
-mpl.rcParams["figure.dpi"] =300
+# import matplotlib as mpl
+# mpl.rcParams["figure.dpi"] =300
  
-#%% Amniochorion --> periplacental vs pericervical
+# #%% Amniochorion --> periplacental vs pericervical
 
-path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")
+# path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")
 
-#amniochorion 
-df = df.dropna() # if you don't do this it won't plot data
+# #amniochorion 
+# df = df.dropna() # if you don't do this it won't plot data
 
-boxwhisker = hv.BoxWhisker(df, ["location", "layers"], "max_pressure", label="Max Pressure kPa" )
-boxwhisker.opts(xrotation=90, width=800, height=800)
+# boxwhisker = hv.BoxWhisker(df, ["location", "layers"], "max_pressure", label="Max Pressure kPa" )
+# boxwhisker.opts(xrotation=90, width=800, height=800)
 
-# display counts for each
-for layers in ["amnion", "amniochorion", "chorion"]:
-    pass
-    for loc in ["pericervical", "periplacental"]:
-        pass
-        df_loc = df[df["location"]== loc]
-        df_loc_layer = df_loc[df_loc["layers"] == layers]
-        print(f"{loc} | {layers}  : {len(df_loc_layer)}")
+# # display counts for each
+# for layers in ["amnion", "amniochorion", "chorion"]:
+#     pass
+#     for loc in ["pericervical", "periplacental"]:
+#         pass
+#         df_loc = df[df["location"]== loc]
+#         df_loc_layer = df_loc[df_loc["layers"] == layers]
+#         print(f"{loc} | {layers}  : {len(df_loc_layer)}")
 
-# export 
-# df.to_csv(path_figures / "apex_rise_pressures_fixed_loc.csv")
-hv.save(boxwhisker, path_figures / "apex_rise_pressures_boxwhisker.html")
-#%%
-# hv.render(boxwhisker, backend="matplotlib") # plot data
-
-#%%
-
-
-# table = hv.Table(boxwhisker)
-# table.opts(width=800, height=800)
-# hv.save(table, path_figures / "apex_rise_pressures_table.html")
-# # hv.render(table, backend="matplotlib") # plot data
-
-#%%
-
-# groups = [chr(65+g) for g in np.random.randint(0, 3, 200)]
-# boxwhisker = hv.BoxWhisker((groups, np.random.randint(0, 5, 200), np.random.randn(200)),
-#               ['Group', 'Category'], 'Value').sort()
-# boxwhisker.opts(
-#     opts.BoxWhisker(box_color='white', height=400, show_legend=False, whisker_color='gray', width=600))
-    
-
+# # export 
+# hv.save(boxwhisker, path_figures / "apex_rise_pressures_boxwhisker.html")
