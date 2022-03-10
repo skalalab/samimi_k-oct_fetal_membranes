@@ -79,7 +79,7 @@ for path_sample in tqdm(list_path_sample_dirs[:]):
         
         # POPULATE DATAFRAME for sample
         # "sample": [sample], "subsample": [subsample_name],
-        data = { "location" : [location] , "layers": [layers], "term":term, "max_pressure": [max_pressure]}
+        data = { "location" : [location] , "layers": [layers], "birth_type":term, "max_pressure": [max_pressure]}
         df = pd.DataFrame(data=data)
         # df = df.set_index("sample", drop=True)
         
