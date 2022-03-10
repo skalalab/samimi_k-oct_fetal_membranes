@@ -44,7 +44,9 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
         df = pd.read_csv(path_csv, names=["Apex Rise", "Pressure"])
         df = df.reset_index()
         df = df.rename(columns={"index":"frame_number"})
+        df["frame_number"] = df["frame_number"] + 1 # first frame is 1 not zero
         df = df.dropna()
+        df = df.reset_index(drop=True) # reset index
         df_pressure_apex = df
         
         #%% Extract indices for toe and loading region
@@ -221,9 +223,25 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
         dict_tension_strain_modulus[sample_name] = {} # add entry for this sample
         ## save frame by frame tension/strain values
 
-        # path_features_all = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\features_all")
+        #save individual csv files?
+        # df_frame_by_frame_tension_strain = pd.DataFrame(
+        #     {"tension" : tension[1:],
+        #      "strain" : strain[1:]})
+        # df.to_csv(path_features_all / f"{path_csv.stem}_all.csv")
+
+        
         dict_tension_strain_modulus[sample_name]["tension"] = tension[1:] # we inserted 1st value
-        dict_tension_strain_modulus[sample_name]["strain"] = strain[1:] # we inserted 1st value
+        dict_tension_strain_modulus[sample_name]["strain"] =  strain[1:]# we inserted 1st value
+        dict_tension_strain_modulus[sample_name]["frame_indices"] =  df_pressure_apex["frame_number"].values
+        
+        # save max values
+        dict_tension_strain_modulus[sample_name]["max_tension"] = np.max(tension[1:])
+        dict_tension_strain_modulus[sample_name]["max_strain"] = np.max(strain[1:])
+        dict_tension_strain_modulus[sample_name]["max_apex"] = np.max(apex)
+        
+        # frame ranges 
+        dict_tension_strain_modulus[sample_name]["toe_frame_range"] = idx_toe
+        dict_tension_strain_modulus[sample_name]["loaded_frame_range"] = idx_loaded
         
         # df = df.set_index("frame_number", drop=True)
         #df.to_csv(path_features_all / f"{path_csv.stem}_all.csv")
@@ -242,12 +260,12 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
         
         csv_filename = path_csv.stem 
         # TERM    
-        dict_tension_strain_modulus[sample_name]["term"] = "unlabored" if "C_section" in csv_filename \
+        dict_tension_strain_modulus[sample_name]["birth_type"] = "unlabored" if "C_section" in csv_filename \
             else "labored"
         
         # save tension modulus
-        dict_tension_strain_modulus[sample_name]["toe_tension_strain"] = toe_slope
-        dict_tension_strain_modulus[sample_name]["loaded_tension_strain"] = loaded_slope
+        dict_tension_strain_modulus[sample_name]["toe_modulus"] = toe_slope
+        dict_tension_strain_modulus[sample_name]["loaded_modulus"] = loaded_slope
         
         # Location
         if "pericervical" in csv_filename:
