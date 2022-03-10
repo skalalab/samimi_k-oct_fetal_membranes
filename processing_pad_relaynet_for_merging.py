@@ -30,7 +30,7 @@ def pad_relaynet_for_merging(df_apex_rise_pressure: pd.DataFrame,
             # create list of indices to match apex rise df
             list_new_indices = np.arange(num_missing_rows) + len(df_thickness)
             # print(df_copy.loc[len(df_copy.index)-1])
-            filler_row = ["NaA"] * len(df_thickness.columns) # create filler row matching number of cols 
+            filler_row = ["NaN"] * len(df_thickness.columns) # create filler row matching number of cols 
             for idx in list_new_indices: # fill indicex with filler row
                 df_copy.loc[idx] = filler_row
             df_thickness = df_copy # replace df
