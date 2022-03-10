@@ -12,6 +12,7 @@ hv.extension("bokeh")
 from holoviews import opts
 from tqdm import tqdm
 import re
+from processing_pad_relaynet_for_merging import pad_relaynet_for_merging
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 
@@ -71,16 +72,7 @@ for pos, dict_paths in tqdm(enumerate(list_tuples_of_matching_files[:])): # for 
         
         ## if not same lengths
         if not len(df_pressure) == len(df_thickness):
-            num_missing_rows= len(df_pressure) - len(df_thickness)
-            df_copy = df_thickness.copy()
-            
-            # create list of indices to match apex rise df
-            list_new_indices = np.arange(num_missing_rows) + len(df_thickness)
-            # print(df_copy.loc[len(df_copy.index)-1])
-            filler_row = ["NaN"] * len(df_thickness.columns) # create filler row matching number of cols 
-            for idx in list_new_indices: # fill indicex with filler row
-                df_copy.loc[idx] = filler_row
-            df_thickness = df_copy # replace df
+           df_thickness = pad_relaynet_for_merging(df_pressure, df_thickness)
         
         df = pd.concat([df_pressure, df_thickness], axis=1)
         df.index = np.arange(1, len(df_thickness)+1)
