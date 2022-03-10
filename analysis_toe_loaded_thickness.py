@@ -208,7 +208,7 @@ for pos, dict_paths in tqdm(enumerate(list_tuples_of_matching_files[:])): # for 
         ### DETERMINE OTHER PARAMETERS 
         # term
         csv_filename = file_path.stem 
-        dict_dataset[sample_name]["term"] = "unlabored" if "C_section" in csv_filename \
+        dict_dataset[sample_name]["birth_type"] = "unlabored" if "C_section" in csv_filename \
             else "labored"
             
         # Location
