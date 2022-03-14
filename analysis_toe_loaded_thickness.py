@@ -16,12 +16,13 @@ from processing_pad_relaynet_for_merging import pad_relaynet_for_merging
 
 path_dataset = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\human_dataset_copy_no_oct_files")
 
-# list_feature_csv_files = list(path_dataset.rglob("*features.csv"))
+
 
 # find exports to merge into df
 list_pressure_csv_files = list(path_dataset.rglob("*_Pressure_Apex.csv"))
 list_thickness_csv_files = list(path_dataset.rglob("*_thickness.csv"))
 
+# create tupples only of samples that have pressure and thickness exports
 list_tuples_of_matching_files = []
 for path_pressure_file in list_pressure_csv_files:
     pass
@@ -232,6 +233,7 @@ for pos, dict_paths in tqdm(enumerate(list_tuples_of_matching_files[:])): # for 
     path_sample_output = file_path.parent
     filename = file_path.stem.rsplit("_", 2)[0]
     df_thick = pd.DataFrame(dict_dataset).transpose()
+    df_thick.index.name = "sample_name"
     df_thick.to_csv(path_sample_output / f"{filename}_toe_loaded_thicknesses.csv")
         
 #%%

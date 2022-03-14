@@ -31,7 +31,7 @@ list_toe_greater_than_loaded = []
 
 
     
-for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate through
+for pos, path_csv in tqdm(enumerate(list_path_features_csv[:-1])): # iterate through
     pass
     print(path_csv.stem)
     ## grid search
@@ -39,7 +39,6 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
     dict_frame_by_frame_tension_strain = {}
     for dict_params in list_combinations: #iterate through parameters
         pass
-    
     
         df = pd.read_csv(path_csv, names=["Apex Rise", "Pressure"])
         df = df.reset_index()
@@ -240,8 +239,8 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
         dict_tension_strain_modulus[sample_name]["max_apex"] = np.max(apex)
         
         # frame ranges 
-        dict_tension_strain_modulus[sample_name]["toe_frame_range"] = idx_toe
-        dict_tension_strain_modulus[sample_name]["loaded_frame_range"] = idx_loaded
+        # dict_tension_strain_modulus[sample_name]["toe_frame_range"] = idx_toe
+        # dict_tension_strain_modulus[sample_name]["loaded_frame_range"] = idx_loaded
         
         # df = df.set_index("frame_number", drop=True)
         #df.to_csv(path_features_all / f"{path_csv.stem}_all.csv")
@@ -291,7 +290,8 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:])): # iterate throu
     df_tension_strain = pd.DataFrame(dict_tension_strain_modulus).transpose()
     df_tension_strain.index.name = "sample_name"
     
-    df_tension_strain.to_csv(path_output / f"{filename}_toe_loaded_tension_strain.csv")
+    if len(dict_tension_strain_modulus) != 0: #only save non empty dictionaries
+        df_tension_strain.to_csv(path_output / f"{filename}_toe_loaded_tension_strain.csv")
     
     ## separate odd samples
     # df_loaded_tension_greater_than_toe = df_tension_strain[df_tension_strain["loaded_tension"] > df_tension_strain["toe_tension"]]
