@@ -23,11 +23,7 @@ The script also exports a csv file including the following data for eahc of the 
   1) frame number 
   2) calculated thickness 
   3) area
-  4) length    
- 
-* **processing_inference_on_images**
-  * **processing_layer_edge_fitting_code** func:`compute layer thickness`
-
+  4) length
 
 ### Apex Rise vs Pressure Correlation
 
@@ -44,8 +40,9 @@ These reporting scrips were created to track samples being processed. They mainl
    
 * **Report for Amnion and Chorion samples** `processing_report_amnion_chorion.py` : Displays a list of all the amnior or chorion samples left to process. Similar to the file above but does not look for the ReLayNet segmentation exports.
 
-### 
-* **tension_strain_processing.py**
+### Tension Strain
+
+* **Computing Tension and Strain for Toe and Loaded Regions** `analysis_stress_tension_strain_code/tension_strain_processing.py` : Loads the apex_rise vs pressure exports (samplename_Pressure_Apex.csv),  
   *  
 <hr>
 
