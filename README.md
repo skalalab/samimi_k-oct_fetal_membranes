@@ -31,17 +31,18 @@ The script also exports a csv file including the following data for eahc of the 
 
 ### Apex Rise vs Pressure Correlation
 
-* **processing_frame vs pressure vs apex rise code**
-  * **Apex_rise_detection** : tracks apex rising throughout the sample by selecting a region to track taking it's fft and comparing it against the next frames fft to match regions. output array shows displacement of the membrane
-  * **Apex_rise_crop_data** : this script loads previous apex rise detection and allows a user to  manually exclude refocusing regions on the apex rise graph as well as on the pressure graph. the resulting pressure graph is then interpolated to determine the pressure of the sample at any given frame 
+Processing of the tiff stacks was done to extract the rise displacement from frame to frame. A separate script was then done to interpolate pressure over the frames kept in order to estimate the pressure at any one frame.
+
+* **Extracting apex rise displacement** `Apex_rise_detection.m` : tracks apex rising throughout the sample by selecting a region on the image to track, taking it's fft and comparing it against the next frames fft to match regions. This script output a csv file of y displacements of the membrane called _samplename_raw_apex_rise.csv_
+* **Apex rise vs pressure interpolation** `Apex_rise_crop_data.m` : this script loads previous apex rise detection and allows a user to  manually exclude refocusing regions on the apex rise graph as well as on the pressure graph. The resulting pressure graph is then interpolated to determine the pressure of the sample at any given frame. This scripts exports a csv called _samplename_Pressure_Apex.csv_
   
 ### Reporting scripts
 
-These reporting scrips were created to track samples being processed. They mainly look for pressure files (__Pressure.txt_) and make sure there is a corresponding imgage file. it then looks for output files for each of the tasks: segmentation, apex_rise vs pressure calculation and features.csv file containing the combined datasets. 
+These reporting scrips were created to track samples being processed. They mainly look for pressure files (_Pressure.txt_) and make sure there is a corresponding image file. It then looks for output files for each of the tasks: layer segmentation, apex rise vs pressure calculation and outputs if a sample is missing any. 
 
-* **processing_report_amniochorion** : Displays a list of all the samples left to process. Processing includes segmentation through ReLayNet, apex rise detection and pressure correlation. Additionally lines in this 
+* **Report for Amniochrion samples** `processing_report_amniochorion.py` : Displays a list of all the samples left to process. Processing includes segmentation through ReLayNet, apex rise detection and pressure correlation. Additionally lines in this 
    
-* **processing_report_amnion_chorion** : Displays a list of all the samples left to process. Similar to the file above but does not use ReLayNet for segmentation.
+* **Report for Amnion and Chorion samples** `processing_report_amnion_chorion.py` : Displays a list of all the amnior or chorion samples left to process. Similar to the file above but does not look for the ReLayNet segmentation exports.
 
 ### 
 * **tension_strain_processing.py**
