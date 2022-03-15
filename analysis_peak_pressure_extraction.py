@@ -96,35 +96,3 @@ for path_sample in tqdm(list_path_sample_dirs[:]):
 
 # set index to sample and drop index
 # df = df.set_index("sample", drop=True)
-#%%
-# import pandas as pd 
-# import numpy as np
-# import holoviews as hv 
-# from holoviews import opts
-# # hv.extension("bokeh")
-# hv.extension("bokeh", "matplotlib")
-
-# import matplotlib as mpl
-# mpl.rcParams["figure.dpi"] =300
- 
-# #%% Amniochorion --> periplacental vs pericervical
-
-# path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")
-
-# #amniochorion 
-# df = df.dropna() # if you don't do this it won't plot data
-
-# boxwhisker = hv.BoxWhisker(df, ["location", "layers"], "max_pressure", label="Max Pressure kPa" )
-# boxwhisker.opts(xrotation=90, width=800, height=800)
-
-# # display counts for each
-# for layers in ["amnion", "amniochorion", "chorion"]:
-#     pass
-#     for loc in ["pericervical", "periplacental"]:
-#         pass
-#         df_loc = df[df["location"]== loc]
-#         df_loc_layer = df_loc[df_loc["layers"] == layers]
-#         print(f"{loc} | {layers}  : {len(df_loc_layer)}")
-
-# # export 
-# hv.save(boxwhisker, path_figures / "apex_rise_pressures_boxwhisker.html")

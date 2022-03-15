@@ -69,7 +69,7 @@ for sample_key in dict_path_files:
         sample_set["max_pressure"] != "" and sample_set["max_pressure"].exists() and \
         sample_set["matlab_apex_rise_pressure"] != "" and sample_set["matlab_apex_rise_pressure"].exists():
 
-        # amniochorion will have these 
+        # only amniochorion will have these 
         # sample_set["relaynet_thicknesses"] != "" and sample_set["relaynet_thicknesses"].exists() and \
         # sample_set["toe_loaded_thickness"] != "" and sample_set["toe_loaded_thickness"].exists() and \
 
@@ -218,6 +218,6 @@ for complet_set_key in tqdm(list(dict_complete_sets)[:]):
     # df_merged.index.names = ["frame_number"] 
     
     path_features_csv = path_output / f"{base_filename}_features.csv"
-    df_merged.to_csv(path_features_csv, na_rep="NA")
     df_merged.index.name = "index"
+    df_merged.to_csv(path_features_csv, na_rep="NA")
     print(path_features_csv.name)
