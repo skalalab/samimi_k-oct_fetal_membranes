@@ -1,28 +1,35 @@
-# fetal_membrane_kayvan
+# OCT Measurement of mechanical properties in human fetal membranes
 
+## Dataset Processing 
 
+### OCT Layer Segmentation
 
-### Testing and training ReLayNet
-Our segmentations were performed  with the publicly available fully convolutional neural network ReLayNet originally intended for segmentation of retinal diabetic macular edema in optical coherence tomography images. A fork of this Unet with some modifications is available publicly on the following repository
+Our segmentations were performed  with the publicly available fully convolutional neural network **ReLayNet** originally intended for segmentation of retinal diabetic macular edema in optical coherence tomography images. A fork of this Unet with some modifications is available publicly on the following repository
 https://github.com/skalalab/relaynet_pytorch
 
+Processing files for this task
 
-* **training_duke_dataset_to_h5** This script takes in the h5 dataset used in the main ReLayNet research article and converts it into h5 files that can be used to train the ReLayNet. This file was created as the dataset was not published in a format that could easily be used to train and predict on the ReLayNet.
+* **Generating Duke Retina dataset for ReLayNet**  `training_duke_dataset_to_h5.py` :  This script takes in the h5 dataset used in the main ReLayNet research article and converts it into h5 files that can be used to train the ReLayNet. This file was created as the dataset was not published in a format that could easily be used to train and predict on the ReLayNet.
 
-* **training_placenta_dataset_to_h5** this script was created based on the script above to take our images and masks and package them into h5 files that can be used to train the ReLayNet. 
+* **Generating fetal membrane dataset for ReLayNet** `training_placenta_dataset_to_h5.py` : this script was created based on the script above to take our images and masks and package them into h5 files that can be used to train the ReLayNet. 
 
 
-<hr>
+* **Gereating inferences on images with trained model** `processing_inference_on_images.py` : Once we have a trained model, the `processing_inference_on_images.py` script loads the trained model and predicts layer segmentation on the OCT tiff stacks and computes the layer thickness by using the function `compute layer thickness` found in the module `processing_layer_edge_fitting_code.py`. The `processing_inference_on_images.py` outputs a tiff stack of layer segmentation masks in uint8 along with a tiff stack of 
+1) original image 
+2) layer segmentation 
+3) layer edge estimation for each frame in the tiff stack
 
-## Processing Scripts
-###  Inference on images 
-Once we have a trained model, the **processing_inference_on_images** script loads the trained model and predicts layer segmentation on OCT tiff stacks and computes the layer thickness by using the function `compute layer thickness` found in the module **layer_edge_fitting_code**. The **processing_inference_on_images** outputs a tiff stack of layer segmentation masks in uin8 along with a tiff stack of 1) original image 2) layer segmentation and 3) layer edge estimation for each frame in the tiff stack, finally a csv file including 1) frame number 2) calculated thickness 3)area and 4)length for each of the 4 layers amnion, spongy,chorion, decidua.   
+The script also exports a csv file including the following data for eahc of the four layers (amnion, spongy,chorion, decidua).
+  1) frame number 
+  2) calculated thickness 
+  3) area
+  4) length    
  
 * **processing_inference_on_images**
   * **processing_layer_edge_fitting_code** func:`compute layer thickness`
 
 
-### Apex rise vs pressure correlation and interpolation
+### Apex Rise vs Pressure Correlation
 
 * **processing_frame vs pressure vs apex rise code**
   * **Apex_rise_detection** : tracks apex rising throughout the sample by selecting a region to track taking it's fft and comparing it against the next frames fft to match regions. output array shows displacement of the membrane
