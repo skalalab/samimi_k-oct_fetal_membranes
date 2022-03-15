@@ -36,16 +36,52 @@ These reporting scrips were created to track samples being processed. They mainl
    
 * **processing_report_amnion_chorion** : Displays a list of all the samples left to process. Similar to the file above but does not use ReLayNet for segmentation.
 
-
+### 
+* **tension_strain_processing.py**
+  *  
 <hr>
+
 ### Workflow 
 
  1. Train the ReLayNet by generating the training h5 files **training_placenta_dataset_to_h5**
     1. Resulting output will be a output_name.model file that can be used to predict on this model
  2. **processing_inference_on_images** this script loads the model and predicts layer segmentation and thickness based on a tiff stack of oct layers
  3. **Apex_rise_detection** and **Apex_rise_crop_data** scripts will in the  need dirctory **processing_frame vs pressure vs apex rise code** need to be run in matlab in this order. The **Apex_rise_detection** script will track change in apex position which will then be used in the  **Apex_rise_crop_data** to correlate and interpolate apex rise and pressure measurements from the arduino.
-1. **merge_csv** once the **inference_on_images** and the **Apex_rise_detection** and **Apex_rise_crop_data** scripts have generated their corresponding **.csv** files. This script will merge them all into a **filename_features.csv** that contains all relevant data for analysis
+1. **processing_merge_csv** once the **inference_on_images** and the **Apex_rise_detection** and **Apex_rise_crop_data** scripts have generated their corresponding **.csv** files. This script will merge them all into a **filename_features.csv** that contains all relevant data for analysis
 
+_<python_file ==> export summary script>_
+```
+* **ReLayNet** ==> (processing_inference_on_images.py ==> *_thickness.csv)
+  * length
+  * area 
+  * thickness
+
+* **pressure files** (analysis_peak_pressure_extraction.py ==> *_max_pressure.csv)
+  * max pressure (repeat across rows)
+  * layer
+  * location
+  * pregnancy
+
+* **Apex-rise vs Pressure** (tension_strain_processing.py ==> *toe_loaded_tension_strain.csv)
+  * complete apex rise curve w/o NaN's  
+  * loading curves
+  * max_apex
+  * max_strain
+  * max_tension
+  * toe modulus
+  * linear modulus
+  * frame_by_frame_tension_strain
+  * toe_thresholds(low/high)
+  * loaded_thresholds(low/high)
+
+* **matlab scripts**
+  * apex rise without refocusing cuts (*_Apex_raw.csv)
+
+* **avg layer thicknesses** (analysis_thickness_toe_loaded_plots.py ==> *toe_loaded_thicknesses.py) 
+ (amnion, chorion, spongy, decidua)
+  * toe regions
+  * linear regions
+```
 <hr>
 ### Analysis 
 
