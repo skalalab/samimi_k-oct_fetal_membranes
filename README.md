@@ -40,22 +40,17 @@ These reporting scrips were created to track samples being processed. They mainl
    
 * **Report for Amnion and Chorion samples** `processing_report_amnion_chorion.py` : Displays a list of all the amnior or chorion samples left to process. Similar to the file above but does not look for the ReLayNet segmentation exports.
 
-### Tension Strain
+## Workflow 
 
-* **Computing Tension and Strain for Toe and Loaded Regions** `analysis_stress_tension_strain_code/tension_strain_processing.py` : Loads the apex_rise vs pressure exports (samplename_Pressure_Apex.csv),  
-  *  
-<hr>
+ 1. Train the ReLayNet by generating the training h5 files using `training_placenta_dataset_to_h5.py`
+    1. Resulting output will be a _output_name.model_ file that can be used to predict on this model
+ 2. Load the model and predict layer segmentation and thickness based on a tiff stack of oct layers `processing_inference_on_images.py`
+ 3. `Apex_rise_detection.m` and `Apex_rise_crop_data.m` within the directory `processing_frame vs pressure vs apex rise code` need to be run in matlab in this that order. The `Apex_rise_detection.m` script will track displacement in apex position which will then be used in the  `Apex_rise_crop_data.m` to correlate and interpolate apex rise and pressure measurements from the arduino.
+1. `processing_merge_csv.py` once the `processing_inference_on_images.py` and the `Apex_rise_detection.m` and `Apex_rise_crop_data.m` scripts have generated their corresponding **.csv** files. This script will merge them all into a _samplename_features.csv_ that contains all relevant data for analysis
 
-### Workflow 
 
- 1. Train the ReLayNet by generating the training h5 files **training_placenta_dataset_to_h5**
-    1. Resulting output will be a output_name.model file that can be used to predict on this model
- 2. **processing_inference_on_images** this script loads the model and predicts layer segmentation and thickness based on a tiff stack of oct layers
- 3. **Apex_rise_detection** and **Apex_rise_crop_data** scripts will in the  need dirctory **processing_frame vs pressure vs apex rise code** need to be run in matlab in this order. The **Apex_rise_detection** script will track change in apex position which will then be used in the  **Apex_rise_crop_data** to correlate and interpolate apex rise and pressure measurements from the arduino.
-1. **processing_merge_csv** once the **inference_on_images** and the **Apex_rise_detection** and **Apex_rise_crop_data** scripts have generated their corresponding **.csv** files. This script will merge them all into a **filename_features.csv** that contains all relevant data for analysis
-
-_<python_file ==> export summary script>_
 ```
+Format: <python_file ==> export summary script>
 * **ReLayNet** ==> (processing_inference_on_images.py ==> *_thickness.csv)
   * length
   * area 
@@ -87,18 +82,31 @@ _<python_file ==> export summary script>_
   * toe regions
   * linear regions
 ```
-<hr>
-### Analysis 
 
-* **analysis_cross_validation.py** Loads the data for one of the 10 folds the dataset was divided into. It then computes the layer segmentation prediction over the testing images and outputs a graph with dice coefficient compared to the ground truth of those test images.
+## Analysis 
 
-**analysis_stress_tension_strain code** directory
-* Original scripts were written in matlab (**Stress_Strain_Processing** **Tension_Strain_Processing**) code was then ported into python to automate processing and plotting of the toe and loaded regions for each of the apex rise vs pressure samples the main script for this is **tension_strain_processing** which loads information from the **features.csv** files prevoiusly generated
+### ReLayNet Thicknesses
 
-**analysis_stress_tension_strain code** directory
+* **Computing Cross Validation** `analysis_cross_validation.py` : Loads the data for one of the 10 folds the dataset was divided into. It then computes the layer segmentation prediction over the testing images and outputs a graph with Dice coefficient compared to the ground truth of those test images.
 
-* **tension_strain_processing** this is the main script for loading and extracting the toe and loaded regions from the **features.csv** files previously generated
+
+### Tension Strain for Toe and Loaded Pressure Ranges 
+Original scripts were written in matlab (`Stress_Strain_Processing.m` `Tension_Strain_Processing.m`) code was ported into python to automate processing the toe and loaded regions for each of the apex rise vs pressure samples.
+
+* **Computing Tension and Strain for Toe and Loaded Regions** `analysis_stress_tension_strain_code/tension_strain_processing.py` : Loads the apex_rise vs pressure exports _samplename_Pressure_Apex.csv_, finds the indices of the curve given predefined pressure ranges for the toe and loaded region, computes the tension and strain for each frame and then the tension-strain modulus for the toe and loaded regions. Outputs a _*_toe_loaded_tension_strain.csv_ file with calculated values.
+
+### Thicknesses for Toe and Loaded Pressure Ranges 
+
+* **Computing thickness across toe and loaded regions** `analysis_toe_loaded_thickness.py` Loads the _*_Pressure_Apex.csv_ _*_thickness.csv_ files if they exist for the sample and then computes thickness averages across predetermined pressure ranges for the regions. Outputs computations on a csv file called _*_toe_loaded_thicknesses.csv_
+
+### Peak Pressure Extraction
+
+* **Extract max/rupture pressure for each sample** `analysis_peak_pressure_extraction.py` : iterates through all the pressure files in each sample and extracts the maximum pressure  into a _*_max_pressure.csv_ file.
+
+
 
 ### Other files
 
-* **relaynet_utils** a collection of functions used throughout the scripts to simplify processing and analysis
+* `relaynet_utils.py` : a collection of functions used throughout the scripts to simplify processing and analysis
+* `processing_pad_relaynet_for_merging.py` : ReLayNet stops segmenting when the fetal membrane ruptures, leading to fewer frames than those in the tiff stack. This script pads the relaynet dataframe with NaN's to match size of original tiff stack. 
+* `analysis_load_features_save_summaries.py` : Loads all the _*_features.csv_ files and exports a single CSV file with a summary of features per sample(e.g. max pressure, max apex rise, etc)
