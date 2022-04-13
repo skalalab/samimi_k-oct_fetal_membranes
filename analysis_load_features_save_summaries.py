@@ -25,11 +25,12 @@ dict_data_common_to_samples = {
     # apex rise and pressure 
     "max_apex" : 'max_apex',
     "max_strain" : 'max_strain',
+    "max_tension" : 'max_tension',
     "max_pressure" :  'max_pressure',
 
     # tension/strain script
-    "tension" : 'tension',
-    "strain" : 'strain',
+    # "tension" : 'tension',
+    # "strain" : 'strain',
     'threshold_toe_low' : 'threshold_toe_low', 
     'threshold_toe_high' : 'threshold_toe_high',
     'threshold_loaded_low' : 'threshold_loaded_low',
@@ -64,7 +65,7 @@ data_only_amniochorion = {
     'avg_decidua_loaded_thickness' : 'avg_decidua_loaded_thickness',
     'avg_amnion_spongy_chorion_loaded_thickness' : 'avg_amnion_spongy_chorion_loaded_thickness'  
     }
-
+ 
 
 #%%
 df_all_features = pd.DataFrame()
@@ -114,7 +115,7 @@ df_amniochorion = df_summary[df_summary["layers"] == "amniochorion"]
 #%% quick plots 
 
 import holoviews as hv
-hv.extensions('bokeh')
+hv.extension('bokeh')
 from holoviews import opts
 
 path_figures = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures")

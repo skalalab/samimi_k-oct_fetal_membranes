@@ -154,6 +154,7 @@ for complet_set_key in tqdm(list(dict_complete_sets)[:]):
     df_merged["threshold_toe_high"] = [row_toe_loaded_tension_strain["threshold_toe_high"][0]] * len(df_merged)
     df_merged["threshold_loaded_low"] = [row_toe_loaded_tension_strain["threshold_loaded_low"][0]] * len(df_merged)
     df_merged["threshold_loaded_high"] = [row_toe_loaded_tension_strain["threshold_loaded_high"][0]] * len(df_merged)
+    df_merged["max_tension"] = [row_toe_loaded_tension_strain["max_tension"][0]] * len(df_merged)
     df_merged["max_strain"] = [row_toe_loaded_tension_strain["max_strain"][0]] * len(df_merged)
     df_merged["max_apex"] = [row_toe_loaded_tension_strain["max_apex"][0]] * len(df_merged)
     df_merged["toe_modulus"] = [row_toe_loaded_tension_strain["toe_modulus"][0]] * len(df_merged)

@@ -301,42 +301,5 @@ for pos, path_csv in tqdm(enumerate(list_path_features_csv[:-1])): # iterate thr
         #df_funky.to_csv(path_output / f"tension_strain_range_{str_loaded_range}_toe_greater_loaded.csv")
 
     
-    #%% GENERATE PLOT
 
-    
-    # path_output = Path(r"Z:\0-Projects and Experiments\KS - OCT membranes\figures\tension_strain_toe_loaded")
-    
-
-    
-    
-    # kdims = [("term","Pregnancy Term"),
-    #          ("location", "Location")
-    #          ] 
-    # vdims = [("toe_tension","Toe Tension Modulus")]
-    
- 
-    # # extract toe and loaded values
-    # toe_low = df_tension_strain['threshold_toe_low'][0]
-    # tow_high = df_tension_strain['threshold_toe_high'][0]
-    # loaded_low = df_tension_strain['threshold_loaded_low'][0]
-    # loaded_high = df_tension_strain['threshold_loaded_high'][0]
-    
-    # boxwhisker_toe = hv.BoxWhisker(df_loaded_tension_greater_than_toe,kdims, vdims)
-    # boxwhisker_toe.opts(title=f"Toe Region ({toe_low} to {tow_high})", tools=["hover"])
-    # # violin_toe = hv.Violin(df_loaded_tension_greater_than_toe, kdims, vdims)
-    # # plots_toe = boxwhisker_toe * violin_toe
-    
-    # vdims = [("loaded_tension","Loaded Tension Modulus")]
-    # boxwhisker_loaded = hv.BoxWhisker(df_loaded_tension_greater_than_toe, kdims, vdims)
-    # boxwhisker_loaded.opts(title=f"Loaded Region ({loaded_low} to {loaded_high})", tools=["hover"])
-    
-    # layout = holoviews_apex_pressure + boxwhisker_toe +  overview_holoviews_apex_pressure + boxwhisker_loaded
-    # layout.opts(
-    #     opts.BoxWhisker(width=500, height=500),
-    #     opts.Scatter(width=500, height=500)
-    #     ).cols(2)
-    
-    # str_loaded_range = f"{loaded_low}_to_{loaded_high}"
-    #hv.save(layout, path_output / f"tension_strain_range_{str_loaded_range}_loaded.html")
-    
 
